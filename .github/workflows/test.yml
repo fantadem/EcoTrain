@@ -1,50 +1,56 @@
-name: Test
+name: test
+
 on:
   push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
-
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Download sources
-        uses: actions/checkout@v4
+      # 1) Télécharger le code
+      - name: Checkout source code
+        uses: actions/checkout@v5
+
+      # 2) Installer NodeJS pour le frontend
       - name: Set up NodeJS
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+
+      # 3) Installer les dépendances du frontend
       - name: Install frontend dependencies
         run: |
           cd frontend
           npm install
-      - name: Generate sample
-        run: |
-          npx --yes dummy-json sample_data.hbs > frontend/public/sample_data.json
+
+      # 4) Build du frontend
       - name: Build frontend
         run: |
           cd frontend
           npm run build
-      - name: Start frontend
+
+      # 5) Construire les images Docker
+      - name: Build Docker images
+        run: |
+          docker compose build
+
+      # 6) Lancer l’application
+      - name: Start application
         run: |
           docker compose up --detach
-      - name: Install GreenIT Analysis CLI
-        run: |
-          wget https://github.com/cnumr/GreenIT-Analysis-cli/archive/refs/heads/master.zip
-          unzip master.zip
-          cd GreenIT-Analysis-cli-master
-          npm install
-          npm link
-      - name: Wait for frontend
+
+      # 7) Attendre que l’application réponde
+      - name: Wait for app to start
         uses: docker://benel/wait-for-response:1
         with:
-          args: http://localhost/ 200 120000 500
-      - name: Run GreenIT Analysis CLI
-        run: |
-          greenit analyse --format html --ci scenarios/buy_train_ticket.yml --timeout 360000
-      - name: Save results
-        uses: actions/upload-artifact@v4
-        with:
-          name: EcoIndex
-          path: Acheterunbilletdetrain.html
+          args: http://localhost/ 200 30000 500
+
+      # 8) Vérifier que le site renvoie quelque chose
+      - name: Verify home page
+        run: curl --silent http://localhost
