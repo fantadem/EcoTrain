@@ -10,63 +10,62 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Récupérer le code
-      - name: Checkout repo
+      # 1) Checkout repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2) Installer Node
+      # 2) Setup Node
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
 
-      # 3) Installer dépendances du frontend
-      - name: Install frontend deps
+      # 3) Install frontend dependencies
+      - name: Install frontend dependencies
         run: |
           cd frontend
           npm install
 
-      # 4) Générer automatiquement sample_data.json
-      - name: Generate sample data
+      # 4) Generate sample data
+      - name: Generate sample_data.json
         run: |
           npm install -g dummy-json
           dummy-json sample_data.hbs > frontend/public/sample_data.json
 
-      # 5) Builder l'application
+      # 5) Build frontend
       - name: Build frontend
         run: |
           cd frontend
           npm run build
 
-      # 6) Démarrer nginx via Docker
+      # 6) Start nginx server
       - name: Start nginx
         run: |
           docker compose up --detach
 
-      # 7) Attendre que le site réponde
+      # 7) Wait for server to respond
       - name: Wait for server
-      uses: JorgenVatle/wait-for-url@v1
-      with:
-        url: "http://localhost"
-        timeout: 30000
+        uses: Jtalk/url-health-check-action@v3
+        with:
+          url: "http://localhost/"
+          max-attempts: 10
+          retry-delay: 3000
 
-      # 8) Installer GreenIT CLI
-      - name: Install GreenIT-Analysis
+      # 8) Install GreenIT CLI
+      - name: Install GreenIT CLI
         run: |
           git clone https://github.com/cnumr/GreenIT-Analysis-cli.git
           cd GreenIT-Analysis-cli
           npm install
 
-      # 9) Lancer l’analyse GreenIT
-      - name: Run GreenIT scenario
+      # 9) Run GreenIT scenario
+      - name: Run GreenIT analysis
         run: |
           cd GreenIT-Analysis-cli
           ./bin/greenit analyse ../scenarios/buy_train_ticket.yml ../greenit_report.html --format html --headless true
 
-      # 10) Publier le rapport en artefact
-      - name: Upload report
+      # 10) Upload report
+      - name: Upload GreenIT report
         uses: actions/upload-artifact@v4
         with:
           name: greenit-report
