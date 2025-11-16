@@ -47,11 +47,10 @@ jobs:
 
       # 7) Attendre que le site réponde
       - name: Wait for server
-        uses: benel/wait-for-response@v1
-        with:
-          url: "http://localhost/"
-          expected-status: 200
-          timeout: 30000
+      uses: JorgenVatle/wait-for-url@v1
+      with:
+        url: "http://localhost"
+        timeout: 30000
 
       # 8) Installer GreenIT CLI
       - name: Install GreenIT-Analysis
