@@ -26,11 +26,12 @@ jobs:
           cd frontend
           npm install
 
-      # 4) Generate sample data
-      - name: Generate sample_data.json
+      # 4) Générer automatiquement sample_data.json
+      - name: Generate sample data
         run: |
           npm install -g dummy-json
-          dummy-json sample_data.hbs > frontend/public/sample_data.json
+          dummy-json ./sample_data.hbs > ./frontend/public/sample_data.json
+
 
       # 5) Build frontend
       - name: Build frontend
