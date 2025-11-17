@@ -1,1 +1,10 @@
+name: Build
 
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    uses: ./.github/workflows/app-start.yml
