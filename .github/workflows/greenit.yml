@@ -43,7 +43,7 @@ jobs:
       # 6) Start nginx server
       - name: Start nginx
         run: |
-         docker-compose up -d
+         docker compose up --detach
 
       # 7) Wait for server to respond
       - name: Wait for server
