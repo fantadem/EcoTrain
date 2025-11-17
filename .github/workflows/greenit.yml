@@ -62,7 +62,7 @@ jobs:
       - name: Run GreenIT analysis
         run: |
           cd greenit-cli
-          node lib/cli.js analyse ../scenarios/buy_train_ticket.yml ../greenit_report.html --format html --headless true
+          node src/cli.js analyse ../scenarios/buy_train_ticket.yml ../greenit_report.html --format html --headless true
 
       # 10) Upload report
       - name: Upload GreenIT report
