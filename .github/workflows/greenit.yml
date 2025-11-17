@@ -57,15 +57,17 @@ jobs:
           git clone https://github.com/cnumr/GreenIT-Analysis-cli.git greenit-cli
           cd greenit-cli
           npm install
+          npm link   # <-- rend la commande `greenit` disponible dans le runner
 
-      # 9) Run GreenIT analysis
-      - name: Run GreenIT analysis
-        run: |
-          cd greenit-cli
-          node src/cli.js analyse ../scenarios/buy_train_ticket.yml ../greenit_report.html --format html --headless true
+# 9) Run GreenIT analysis
+    - name: Run GreenIT analysis
+    run: |
+     # On est à la racine de ton repo EcoTrain
+      greenit analyse ./scenarios/buy_train_ticket.yml ./greenit_report.html --format html --headless true --ci
 
-      # 10) Upload report
-      - name: Upload GreenIT report
+
+     # 10) Upload report
+    - name: Upload GreenIT report
         uses: actions/upload-artifact@v4
         with:
           name: greenit-report
