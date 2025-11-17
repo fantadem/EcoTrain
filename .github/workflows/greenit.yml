@@ -14,63 +14,60 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2) Install Docker Compose (nécessaire sur GitHub runner)
-      - name: Install Docker Compose
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose
-
-      # 3) Setup Node.js
+      # 2) Setup Node
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      # 4) Install frontend dependencies
+      # 3) Install frontend dependencies
       - name: Install frontend dependencies
         run: |
           cd frontend
           npm install
 
-      # 5) Generate sample_data.json
+      # 4) Générer automatiquement sample_data.json
       - name: Generate sample data
         run: |
-          npm install dummy-json
-          npx dummy-json sample_data.hbs > frontend/public/sample_data.json
+         npm install dummy-json
+         npx dummy-json ./sample_data.hbs > ./frontend/public/sample_data.json
 
-      # 6) Build frontend
+
+
+      # 5) Build frontend
       - name: Build frontend
         run: |
           cd frontend
           npm run build
 
-      # 7) Start nginx container
+      # 6) Start nginx server
       - name: Start nginx
         run: |
-          docker compose up -d
+         docker compose up --detach
 
-      # 8) Wait for server
+      # 7) Wait for server to respond
       - name: Wait for server
         uses: Jtalk/url-health-check-action@v3
         with:
           url: "http://localhost/"
           max-attempts: 30
-          retry-delay: 2000
+          retry-delay: 2s
 
-      # 9) Install GreenIT CLI
+      # 8) Install GreenIT CLI
       - name: Install GreenIT CLI
         run: |
-          git clone https://github.com/cnumr/GreenIT-Analysis-cli.git greenit-cli
-          cd greenit-cli
+          git clone https://github.com/cnumr/GreenIT-Analysis-cli.git
+          cd GreenIT-Analysis-cli
           npm install
 
-      # 10) Run GreenIT analysis
+      # 9) Run GreenIT scenario
       - name: Run GreenIT analysis
         run: |
-          cd greenit-cli
-          node bin/greenit.js analyse ../scenarios/buy_train_ticket.yml ../greenit_report.html --format html --headless true
+         cd GreenIT-Analysis-cli
+         node index.js analyse ../scenarios/buy_train_ticket.yml ../greenit_report.html --format html --headless true
 
-      # 11) Upload report
+
+      # 10) Upload report
       - name: Upload GreenIT report
         uses: actions/upload-artifact@v4
         with:
