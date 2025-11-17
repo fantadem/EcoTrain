@@ -56,15 +56,15 @@ jobs:
       # 8) Install GreenIT CLI
       - name: Install GreenIT CLI
         run: |
-          git clone https://github.com/cnumr/GreenIT-Analysis-cli.git
-          cd GreenIT-Analysis-cli
+          git clone https://github.com/cnumr/GreenIT-Analysis-cli.git greenit-cli
+          cd greenit-cli
           npm install
 
       # 9) Run GreenIT scenario
       - name: Run GreenIT analysis
         run: |
-         cd GreenIT-Analysis-cli
-         node greenit.js analyse ../scenarios/buy_train_ticket.yml ../greenit_report.html --format html --headless true
+         cd greenit-cli
+         node bin/greenit.js analyse ../scenarios/buy_train_ticket.yml ../greenit_report.html --format html --headless true
 
 
       # 10) Upload report
