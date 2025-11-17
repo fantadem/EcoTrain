@@ -1,0 +1,49 @@
+name: Start Application
+
+on:
+  workflow_call:
+
+jobs:
+  start-app:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Install Node
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Install frontend dependencies
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      # Generate sample_data.json
+      - name: Generate sample data
+        run: |
+          npm install dummy-json
+          npx dummy-json ./sample_data.hbs > ./frontend/public/sample_data.json
+
+      # Build frontend
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      # Start nginx + any other containers (docker-compose)
+      - name: Start docker containers
+        run: |
+          docker compose up --detach
+
+      # Wait for the server to be ready
+      - name: Wait for server
+        uses: Jtalk/url-health-check-action@v3
+        with:
+          url: "http://localhost/"
+          max-attempts: 30
+          retry-delay: 2s
