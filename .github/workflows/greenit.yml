@@ -29,10 +29,8 @@ jobs:
       # 4) Générer automatiquement sample_data.json
       - name: Generate sample data
         run: |
-         npm install dummy-json
-         npx dummy-json ./sample_data.hbs > ./frontend/public/sample_data.json
-
-
+          npm install dummy-json
+          npx dummy-json ./sample_data.hbs > ./frontend/public/sample_data.json
 
       # 5) Build frontend
       - name: Build frontend
@@ -40,12 +38,12 @@ jobs:
           cd frontend
           npm run build
 
-      # 6) Start nginx server
+      # 6) Start nginx container
       - name: Start nginx
         run: |
-         docker compose up --detach
+          docker compose up --detach
 
-      # 7) Wait for server to respond
+      # 7) Wait for server
       - name: Wait for server
         uses: Jtalk/url-health-check-action@v3
         with:
@@ -53,18 +51,18 @@ jobs:
           max-attempts: 30
           retry-delay: 2s
 
-      # 8) Install GreenIT CLI
+      # 8) Clone + Install GreenIT CLI
       - name: Install GreenIT CLI
         run: |
           git clone https://github.com/cnumr/GreenIT-Analysis-cli.git greenit-cli
           cd greenit-cli
           npm install
 
-      # 9) Run GreenIT scenario
+      # 9) Run GreenIT analysis
       - name: Run GreenIT analysis
         run: |
-         cd greenit-cli
-         node src/cli.js analyse ../scenarios/buy_train_ticket.yml ../greenit_report.html --format html --headless true
+          cd greenit-cli
+          node lib/cli.js analyse ../scenarios/buy_train_ticket.yml ../greenit_report.html --format html --headless true
 
       # 10) Upload report
       - name: Upload GreenIT report
