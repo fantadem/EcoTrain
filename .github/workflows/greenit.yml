@@ -29,8 +29,9 @@ jobs:
       # 4) Générer automatiquement sample_data.json
       - name: Generate sample data
         run: |
-          npm install -g dummy-json
-          dummy-json ./sample_data.hbs > ./frontend/public/sample_data.json
+         npm install dummy-json
+         npx dummy-json ./sample_data.hbs > ./frontend/public/sample_data.json
+
 
 
       # 5) Build frontend
