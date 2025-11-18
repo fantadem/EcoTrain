@@ -1,57 +1,23 @@
 name: GreenIT Analysis
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
 
 jobs:
+  prepare-app:
+    uses: ./.github/workflows/app-start.yml
+
   analyse:
+    needs: prepare-app
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2) Setup Node
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      # 3) Install frontend dependencies
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm install
-
-      # 4) Générer automatiquement sample_data.json
-      - name: Generate sample data
-        run: |
-          npm install dummy-json
-          npx dummy-json ./sample_data.hbs > ./frontend/public/sample_data.json
-
-      # 5) Build frontend
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
-
-      # 6) Start nginx container
-      - name: Start nginx
-        run: |
-          docker compose up --detach
-
-      # 7) Wait for server
-      - name: Wait for server
-        uses: Jtalk/url-health-check-action@v3
-        with:
-          url: "http://localhost/"
-          max-attempts: 30
-          retry-delay: 2s
-
-      # 8) Clone + Install GreenIT CLI
       - name: Install GreenIT CLI
         run: |
           git clone https://github.com/cnumr/GreenIT-Analysis-cli.git greenit-cli
@@ -59,12 +25,10 @@ jobs:
           npm install
           npm link
 
-      # 9) Run GreenIT analysis
       - name: Run GreenIT analysis
         run: |
           greenit analyse ./scenarios/buy_train_ticket.yml ./greenit_report.html --format html --headless true --ci
 
-      # 10) Upload report
       - name: Upload GreenIT report
         uses: actions/upload-artifact@v4
         with:
