@@ -7,24 +7,24 @@ on:
   pull_request:
 
 jobs:
-  start-and-test:
-    uses: ./.github/workflows/app-start.yml
-
   run-tests:
-    needs: start-and-test
     runs-on: ubuntu-latest
 
     steps:
+      # 1) Lancer le workflow réutilisable dans le même job
+      - name: Start app
+        uses: ./.github/workflows/app-start.yml
+
+      # 2) Checkout du code (facultatif si app-start le fait déjà)
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # Ici, l’application est déjà démarrée par app-start.yml
-      # On effectue simplement les tests propres à test.yml
-
+      # 3) Attendre la réponse du serveur
       - name: Wait for app to respond
         uses: docker://benel/wait-for-response:1
         with:
           args: http://localhost/ 200 30000 500
 
+      # 4) Vérifier la home page
       - name: Verify home page returns HTML
         run: curl --silent http://localhost
