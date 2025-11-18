@@ -1,4 +1,4 @@
-name: test
+name: Tests
 
 on:
   push:
@@ -7,50 +7,24 @@ on:
   pull_request:
 
 jobs:
-  build-and-test:
+  start-and-test:
+    uses: ./.github/workflows/app-start.yml
+
+  run-tests:
+    needs: start-and-test
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Télécharger le code
       - name: Checkout source code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      # 2) Installer NodeJS pour le frontend
-      - name: Set up NodeJS
-        uses: actions/setup-node@v6
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+      # Ici, l’application est déjà démarrée par app-start.yml
+      # On effectue simplement les tests propres à test.yml
 
-      # 3) Installer les dépendances du frontend
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm install
-
-      # 4) Build du frontend
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
-
-      # 5) Construire les images Docker
-      - name: Build Docker images
-        run: |
-          docker compose build
-
-      # 6) Lancer l’application
-      - name: Start application
-        run: |
-          docker compose up --detach
-
-      # 7) Attendre que l’application réponde
-      - name: Wait for app to start
+      - name: Wait for app to respond
         uses: docker://benel/wait-for-response:1
         with:
           args: http://localhost/ 200 30000 500
 
-      # 8) Vérifier que le site renvoie quelque chose
-      - name: Verify home page
+      - name: Verify home page returns HTML
         run: curl --silent http://localhost
