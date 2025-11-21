@@ -1,30 +1,52 @@
-name: Tests
+name: Test
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
 
 jobs:
-  run-tests:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1) Lancer le workflow réutilisable dans le même job
-      - name: Start app
-        uses: ./.github/workflows/app-start.yml
+      # 1) Télécharger le code
+      - name: Download sources
+        uses: actions/checkout@v5
 
-      # 2) Checkout du code (facultatif si app-start le fait déjà)
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      # 2) Installer Node.js
+      - name: Set up NodeJS
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      # 3) Attendre la réponse du serveur
-      - name: Wait for app to respond
+      # 3) Installer les dépendances
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      # 4) Construire l'application
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      # 5) Vérifier que Docker Compose est disponible
+      - name: Check docker compose
+        run: docker compose version
+
+      # 6) Démarrer Nginx + ton application
+      - name: Start frontend
+        run: |
+          docker compose up --detach
+
+      # 7) Attendre que l'application réponde
+      - name: Wait for frontend
         uses: docker://benel/wait-for-response:1
         with:
           args: http://localhost/ 200 30000 500
 
-      # 4) Vérifier la home page
-      - name: Verify home page returns HTML
+      # 8) Vérifier que la page d'accueil répond vraiment
+      - name: Watch frontend initial payload
         run: curl --silent http://localhost
