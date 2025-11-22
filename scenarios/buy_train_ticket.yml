@@ -19,7 +19,7 @@
       waitForSelector: article
     - name: Consulter les trajets disponibles selon les critères renseignés
       type: scroll
-      element: main > section > article:nth-child(3) > section > div > div:nth-child(3) > a > button
+      element: main
     - name: Sélectionner le trajet de son choix
       type: click
       element: main > section > article:nth-child(3) > section > div > div:nth-child(3) > a > button
