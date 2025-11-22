@@ -16,7 +16,12 @@
     - name: Choisir la date
       type : type
       element: input[name="date"]
-      text: "2025-01-01T08:00"
+      text: "2025-01-01"
+
+    - name: Choisir l'horaire
+      type: select
+      element: select[name="departureTime"]
+      values: ['08:00']
 
     - name: Lancer la recherche de trajet
       type: click
