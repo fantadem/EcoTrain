@@ -14,14 +14,14 @@
       values: ['Troyes']
 
     - name: Choisir la date
-      type : type
+      type: type
       element: input[name="date"]
       text: "2025-01-01"
 
-    - name: Choisir l'horaire
+    - name: Choisir l'horaire de départ
       type: select
       element: select[name="departureTime"]
-      values: ['08:00']
+      values: ['08h']
 
     - name: Lancer la recherche de trajet
       type: click
@@ -38,7 +38,7 @@
       element: article:nth-child(3) button
       pageChange: true
       waitForSelector: .trip-details
-      
+
     - name: Consulter les détails d'un trajet
       type: click
       element: .trip-details button
