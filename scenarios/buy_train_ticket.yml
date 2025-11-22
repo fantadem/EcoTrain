@@ -2,6 +2,7 @@
 - name: Acheter un billet de train
   url: http://localhost/
   waitForSelector: button
+
   actions:
     - name : Sélection de la gare de départ
       type : select
@@ -18,7 +19,7 @@
       element: input[name="date"]
       text: "2025-01-01"
 
-    - name: Choisir l'horaire de départ
+    - name: Choisir l'horaire
       type: select
       element: select[name="departureTime"]
       values: ['08h']
@@ -29,9 +30,10 @@
       pageChange: true
       waitForSelector: article
 
-    - name: Consulter les trajets disponibles
+    - name: Consulter les trajets disponibles selon les critères renseignés
       type: scroll
-      count: 3
+      element: main
+      count: 2
 
     - name: Sélectionner le trajet de son choix
       type: click
