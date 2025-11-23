@@ -1,42 +1,35 @@
-# Scénario EcoTrain - version stable
+# To be used with GreenIT Analysis CLI
 - name: Acheter un billet de train
   url: http://localhost/
-  waitForSelector: 'select[name="departureStation"]'
-
+  waitForSelector: button
   actions:
-
-    - name: Choisir gare de départ
-      type: select
-      element: 'select[name="departureStation"]'
+    - name : Sélection de la gare de départ
+      type : select
+      element : select[name="departureStation"]
       values: ['Paris']
-
-    - name: Choisir gare d’arrivée
-      type: select
-      element: 'select[name="arrivalStation"]'
+    - name : Sélection de la gare d'arrivée
+      type : select
+      element : 'select[name="arrivalStation"]'
       values: ['Troyes']
-
-    - name: Rechercher un trajet
+    - name: Lancer la recherche de trajet
       type: click
-      element: 'button[type="submit"]'
+      element: main > section > form > div:nth-child(9) > button
       pageChange: true
-      waitForSelector: 'article'
-
-    - name: Défilement des résultats
+      waitForSelector: article
+    - name: Consulter les trajets disponibles selon les critères renseignés
       type: scroll
-
-    - name: Sélectionner le premier trajet
+    - name: Sélectionner le trajet de son choix
       type: click
-      element: 'article:nth-child(1) button'
+      element: main > section > article:nth-child(3) > section > div > div:nth-child(3) > a > button
       pageChange: true
-      waitForSelector: 'main'
-
-    - name: Aller au panier
+      waitForSelector: .trip-details
+    - name: Consulter les détails d'un trajet
       type: click
-      element: 'a[href="/cart"]'
+      element: main > div > div:nth-child(5) > div:nth-child(1) > button
       pageChange: true
-      waitForSelector: 'button'
-
-    - name: Procéder au paiement
+      waitForSelector: .pay-button
+    - name: Consulter son panier et accéder au paiement
       type: click
-      element: 'button'
+      element: main > section > div.pay-button > button
       pageChange: false
+
