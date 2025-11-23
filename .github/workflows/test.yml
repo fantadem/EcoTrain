@@ -1,4 +1,4 @@
-  measure_ecoindex:
+  test:
     needs:
       - build
       - build_samples
