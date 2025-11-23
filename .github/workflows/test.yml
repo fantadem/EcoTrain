@@ -1,57 +1,121 @@
 name: Test
+
 on:
   push:
 
 jobs:
 
+  # -------------------------------------------------------------
+  # 1) Build frontend (existant chez toi, conservé)
+  # -------------------------------------------------------------
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Download sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
       - name: Set up NodeJS
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
+
       - name: Install frontend dependencies
         run: |
           cd frontend
           npm install
-      - name: Generate sample
-        run: |
-          npx --yes dummy-json sample_data.hbs > frontend/public/sample_data.json
+
       - name: Build frontend
         run: |
           cd frontend
           npm run build
-      - name: Save frontend build for later
+
+      - name: Save frontend build
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist
 
-  measure_ecoindex:
-    needs: build
+
+  # -------------------------------------------------------------
+  # 2) Générer sample_data.json automatiquement
+  # -------------------------------------------------------------
+  build_samples:
     runs-on: ubuntu-latest
+
     steps:
       - name: Download sources
         uses: actions/checkout@v5
-      - name: Start application
-        uses: ./.github/actions/start
+
+      - name: Generate sample_data.json
+        run: |
+          npx --yes dummy-json sample_data.hbs > sample_data.json
+
+      - name: Save generated samples
+        uses: actions/upload-artifact@v4
+        with:
+          name: samples
+          path: sample_data.json
+
+
+  # -------------------------------------------------------------
+  # 3) Mesure EcoIndex (= la partie que tu dois ajouter)
+  # -------------------------------------------------------------
+  measure_ecoindex:
+    needs:
+      - build
+      - build_samples
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download sources
+        uses: actions/checkout@v5
+
+      # Récupérer les artifacts générés
+      - name: Retrieve frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
+
+      - name: Retrieve sample_data.json
+        uses: actions/download-artifact@v4
+        with:
+          name: samples
+
+      # Démarrer ton application (comme tu fais déjà)
+      - name: Start frontend in Docker
+        run: |
+          docker compose up -d
+
+      - name: Wait for frontend
+        uses: docker://benel/wait-for-response:1
+        with:
+          args: http://localhost/ 200 30000 500
+
+      # Copie les données dans le conteneur nginx
+      - name: Inject sample_data.json into nginx
+        run: |
+          CID=$(docker ps -qf "name=static_hosting")
+          docker cp sample_data.json $CID:/usr/share/nginx/html/sample_data.json
+
+      # Installer GreenIT CLI
       - name: Install GreenIT Analysis CLI
         run: |
-          wget https://github.com/cnumr/GreenIT-Analysis-cli/archive/refs/heads/master.zip
-          unzip master.zip
-          cd GreenIT-Analysis-cli-master
-          npm install
-          npm link
-      - name: Run GreenIT Analysis CLI
+          npm install -g @greenit/analysis-cli
+
+      # Lancer l’analyse GreenIT sur ton SCÉNARIO PRIORITAIRE
+      - name: Run GreenIT Analysis
         run: |
-          greenit analyse --format html --ci scenarios/buy_train_ticket.yml --timeout 360000
-      - name: Save results
+          greenit analyse --format html --headless true scenarios/buy_train_ticket.yml
+
+      # Sauvegarder les résultats en artifacts
+      - name: Upload EcoIndex results
         uses: actions/upload-artifact@v4
         with:
           name: EcoIndex
-          path: Acheterunbilletdetrain.html
+          path: report/
+
+
