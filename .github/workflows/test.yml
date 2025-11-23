@@ -1,5 +1,4 @@
 name: Test
-
 on:
   push:
 
@@ -9,72 +8,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download sources
-        uses: actions/checkout@v5
-
+        uses: actions/checkout@v4
       - name: Set up NodeJS
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-
       - name: Install frontend dependencies
         run: |
           cd frontend
           npm install
-
+      - name: Generate sample
+        run: |
+          npx --yes dummy-json sample_data.hbs > frontend/public/sample_data.json
       - name: Build frontend
         run: |
           cd frontend
           npm run build
-
-      - name: Upload frontend build
+      - name: Save frontend build for later
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist
-
-  build_samples:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download sources
-        uses: actions/checkout@v5
-
-      - name: Generate sample_data.json
-        run: |
-          npx --yes dummy-json sample_data.hbs > sample_data.json
-
-      - name: Upload sample data
-        uses: actions/upload-artifact@v4
-        with:
-          name: samples
-          path: sample_data.json
 
   measure_ecoindex:
-    needs:
-      - build
-      - build_samples
+    needs: build
     runs-on: ubuntu-latest
-
     steps:
       - name: Download sources
         uses: actions/checkout@v5
-
-      - name: Download frontend build
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend/dist
-
-      - name: Download sample_data.json
-        uses: actions/download-artifact@v4
-        with:
-          name: samples
-          path: frontend/dist
-
       - name: Start application
         uses: ./.github/actions/start
-
       - name: Install GreenIT Analysis CLI
         run: |
           wget https://github.com/cnumr/GreenIT-Analysis-cli/archive/refs/heads/master.zip
@@ -82,13 +47,11 @@ jobs:
           cd GreenIT-Analysis-cli-master
           npm install
           npm link
-
-      - name: Run GreenIT Analysis
+      - name: Run GreenIT Analysis CLI
         run: |
-          greenit analyse --format html --ci scenarios/buy_train_ticket.yml
-
-      - name: Upload EcoIndex Report
+          greenit analyse --format html --ci scenarios/buy_train_ticket.yml --timeout 360000
+      - name: Save results
         uses: actions/upload-artifact@v4
         with:
-          name: ecoindex-report
-          path: report/
+          name: EcoIndex
+          path: Acheterunbilletdetrain.html
