@@ -1,8 +1,10 @@
+# Scénario EcoTrain - version stable
 - name: Acheter un billet de train
   url: http://localhost/
   waitForSelector: 'select[name="departureStation"]'
 
   actions:
+
     - name: Choisir gare de départ
       type: select
       element: 'select[name="departureStation"]'
@@ -13,32 +15,28 @@
       element: 'select[name="arrivalStation"]'
       values: ['Troyes']
 
-    # ON NE REMPLIT PAS LA DATE (picker auto)
-    # ON NE REMPLIT PAS LE SELECT HEURE (DOM ne contient pas name="time")
-    # On clique simplement sur "Rechercher un trajet"
-
     - name: Rechercher un trajet
       type: click
       element: 'button[type="submit"]'
       pageChange: true
       waitForSelector: 'article'
 
-    - name: Scroll résultats
+    - name: Défilement des résultats
       type: scroll
 
-    - name: Choisir le premier trajet
+    - name: Sélectionner le premier trajet
       type: click
       element: 'article:nth-child(1) button'
       pageChange: true
       waitForSelector: 'main'
 
-    - name: Accéder au panier
+    - name: Aller au panier
       type: click
       element: 'a[href="/cart"]'
       pageChange: true
       waitForSelector: 'button'
 
-    - name: Payer
+    - name: Procéder au paiement
       type: click
       element: 'button'
       pageChange: false
