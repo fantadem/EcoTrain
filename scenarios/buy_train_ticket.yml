@@ -1,42 +1,81 @@
-# Scénario EcoTrain - version stable
-- name: Acheter un billet de train
+# =============================
+# Scenario 1 : Renseigner les critères
+# =============================
+- name: Renseigner les critères de recherche
   url: http://localhost/
-  waitForSelector: 'select[name="departureStation"]'
-
+  waitForSelector: select[name="departureStation"]
   actions:
-
     - name: Choisir gare de départ
       type: select
-      element: 'select[name="departureStation"]'
-      values: ['Paris']
+      element: select[name="departureStation"]
+      values: ["Paris"]
 
-    - name: Choisir gare d’arrivée
+    - name: Choisir gare d'arrivée
       type: select
-      element: 'select[name="arrivalStation"]'
-      values: ['Troyes']
+      element: select[name="arrivalStation"]
+      values: ["Troyes"]
 
-    - name: Rechercher un trajet
+    - name: Choisir l'heure
+      type: select
+      element: select[name="time"]
+      values: ["00h"]
+
+    - name: Lancer la recherche
       type: click
       element: 'button[type="submit"]'
       pageChange: true
-      waitForSelector: 'article'
+      waitForSelector: article
 
-    - name: Défilement des résultats
+
+# =============================
+# Scenario 2 : Sélectionner un trajet
+# =============================
+- name: Consulter les trajets disponibles et sélectionner un trajet
+  url: http://localhost/trips?departure=Paris&arrival=Troyes&date=2025-01-01T00:00&passengers=1
+  waitForSelector: article
+  actions:
+    - name: Scroller
       type: scroll
 
     - name: Sélectionner le premier trajet
       type: click
-      element: 'article:nth-child(1) button'
+      element: "article:first-of-type button"
       pageChange: true
-      waitForSelector: 'main'
+      waitForSelector: .trip-details
 
-    - name: Aller au panier
+
+# =============================
+# Scenario 3 : Consulter détails et ajouter au panier
+# =============================
+- name: Consulter les détails et ajouter au panier
+  url: http://localhost/trips?departure=Paris&arrival=Troyes&date=2025-01-01T00:00&passengers=1
+  waitForSelector: article
+  actions:
+    - name: Ouvrir le premier trajet
       type: click
-      element: 'a[href="/cart"]'
+      element: "article:first-of-type button"
       pageChange: true
-      waitForSelector: 'button'
+      waitForSelector: .trip-details
 
-    - name: Procéder au paiement
+    - name: Ajouter au panier
       type: click
-      element: 'button'
-      pageChange: false
+      element: ".trip-details button"
+      pageChange: true
+      waitForSelector: .pay-button
+
+
+# =============================
+# Scenario 4 : Consulter panier et payer
+# =============================
+- name: Consulter panier et accéder au paiement
+  url: http://localhost/cart
+  waitForSelector: .pay-button
+  actions:
+    - name: Scroller
+      type: scroll
+
+    - name: Cliquer payer
+      type: click
+      element: ".pay-button button"
+      pageChange: true
+      waitForSelector: body
