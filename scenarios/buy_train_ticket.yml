@@ -1,7 +1,7 @@
 # To be used with GreenIT Analysis CLI
 - name: Acheter un billet de train
   url: http://localhost/
-  waitForSelector: 'select[name="departureStation"]' # Assurez-vous que les menus sont là
+  waitForSelector: button
   actions:
     - name : Sélection de la gare de départ
       type : select
@@ -15,21 +15,19 @@
       type: click
       element: main > section > form > div:nth-child(9) > button
       pageChange: true
-      # 🚀 CORRECTION : Attente spécifique du premier résultat (article 1)
-      waitForSelector: 'main > section > article:nth-child(1)' 
+      waitForSelector: article
     - name: Consulter les trajets disponibles selon les critères renseignés
       type: scroll
-      element: body # 🚀 CORRECTION : Préciser que l'on scroll sur le corps de la page
     - name: Sélectionner le trajet de son choix
       type: click
       element: main > section > article:nth-child(3) > section > div > div:nth-child(3) > a > button
       pageChange: true
-      waitForSelector: '.trip-details'
+      waitForSelector: .trip-details
     - name: Consulter les détails d'un trajet
       type: click
       element: main > div > div:nth-child(5) > div:nth-child(1) > button
       pageChange: true
-      waitForSelector: '.pay-button'
+      waitForSelector: .pay-button
     - name: Consulter son panier et accéder au paiement
       type: click
       element: main > section > div.pay-button > button
