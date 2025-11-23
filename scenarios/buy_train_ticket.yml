@@ -1,42 +1,34 @@
-# Scénario complet EcoTrain - Compatible DOM vidéo
 - name: Acheter un billet de train
   url: http://localhost/
   waitForSelector: 'select[name="departureStation"]'
 
   actions:
-
     - name: Choisir gare de départ
       type: select
       element: 'select[name="departureStation"]'
       values: ['Paris']
 
-    - name: Choisir gare d'arrivée
+    - name: Choisir gare d’arrivée
       type: select
       element: 'select[name="arrivalStation"]'
       values: ['Troyes']
 
-    - name: Choisir date
-      type: input
-      element: 'input[type="date"]'
-      value: '2025-01-01'
-
-    - name: Choisir heure
-      type: select
-      element: 'select[name="time"]'
-      values: ['00h']
+    # ON NE REMPLIT PAS LA DATE (picker auto)
+    # ON NE REMPLIT PAS LE SELECT HEURE (DOM ne contient pas name="time")
+    # On clique simplement sur "Rechercher un trajet"
 
     - name: Rechercher un trajet
       type: click
       element: 'button[type="submit"]'
       pageChange: true
-      waitForSelector: 'article'   # maintenant correct car articles visibles
+      waitForSelector: 'article'
 
     - name: Scroll résultats
       type: scroll
 
-    - name: Sélectionner un trajet
+    - name: Choisir le premier trajet
       type: click
-      element: 'article:nth-child(1) button'   # le bouton "Ajouter ce billet"
+      element: 'article:nth-child(1) button'
       pageChange: true
       waitForSelector: 'main'
 
