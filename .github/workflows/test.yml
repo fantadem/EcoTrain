@@ -1,52 +1,57 @@
 name: Test
-
 on:
   push:
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # 1) Télécharger le code
       - name: Download sources
-        uses: actions/checkout@v5
-
-      # 2) Installer Node.js
+        uses: actions/checkout@v4
       - name: Set up NodeJS
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-
-      # 3) Installer les dépendances
       - name: Install frontend dependencies
         run: |
           cd frontend
           npm install
-
-      # 4) Construire l'application
+      - name: Generate sample
+        run: |
+          npx --yes dummy-json sample_data.hbs > frontend/public/sample_data.json
       - name: Build frontend
         run: |
           cd frontend
           npm run build
-
-      # 5) Vérifier que Docker Compose est disponible
-      - name: Check docker compose
-        run: docker compose version
-
-      # 6) Démarrer Nginx + ton application
-      - name: Start frontend
-        run: |
-          docker compose up --detach
-
-      # 7) Attendre que l'application réponde
-      - name: Wait for frontend
-        uses: docker://benel/wait-for-response:1
+      - name: Save frontend build for later
+        uses: actions/upload-artifact@v4
         with:
-          args: http://localhost/ 200 30000 500
+          name: frontend-build
+          path: frontend/dist
 
-      # 8) Vérifier que la page d'accueil répond vraiment
-      - name: Watch frontend initial payload
-        run: curl --silent http://localhost
+  measure_ecoindex:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download sources
+        uses: actions/checkout@v5
+      - name: Start application
+        uses: ./.github/actions/start
+      - name: Install GreenIT Analysis CLI
+        run: |
+          wget https://github.com/cnumr/GreenIT-Analysis-cli/archive/refs/heads/master.zip
+          unzip master.zip
+          cd GreenIT-Analysis-cli-master
+          npm install
+          npm link
+      - name: Run GreenIT Analysis CLI
+        run: |
+          greenit analyse --format html --ci scenarios/buy_train_ticket.yml --timeout 360000
+      - name: Save results
+        uses: actions/upload-artifact@v4
+        with:
+          name: EcoIndex
+          path: Acheterunbilletdetrain.html
