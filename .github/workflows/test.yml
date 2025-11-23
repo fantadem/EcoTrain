@@ -6,7 +6,7 @@ on:
 jobs:
 
   # -------------------------------------------------------------
-  # 1) Build frontend (existant chez toi, conservé)
+  # 1) Build frontend
   # -------------------------------------------------------------
   build:
     runs-on: ubuntu-latest
@@ -32,15 +32,14 @@ jobs:
           cd frontend
           npm run build
 
-      - name: Save frontend build
+      - name: Save frontend build as artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist
 
-
   # -------------------------------------------------------------
-  # 2) Générer sample_data.json automatiquement
+  # 2) Generate sample_data.json using dummy-json
   # -------------------------------------------------------------
   build_samples:
     runs-on: ubuntu-latest
@@ -53,18 +52,17 @@ jobs:
         run: |
           npx --yes dummy-json sample_data.hbs > sample_data.json
 
-      - name: Save generated samples
+      - name: Save samples as artifact
         uses: actions/upload-artifact@v4
         with:
           name: samples
           path: sample_data.json
 
-
   # -------------------------------------------------------------
-  # 3) Mesure EcoIndex (= la partie que tu dois ajouter)
+  # 3) Run EcoIndex analysis with GreenIT
   # -------------------------------------------------------------
   measure_ecoindex:
-    needs:
+    needs: 
       - build
       - build_samples
     runs-on: ubuntu-latest
@@ -73,49 +71,47 @@ jobs:
       - name: Download sources
         uses: actions/checkout@v5
 
-      # Récupérer les artifacts générés
+      # Récupérer le build du frontend
       - name: Retrieve frontend build
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist
 
-      - name: Retrieve sample_data.json
+      # Récupérer le sample_data.json généré
+      - name: Retrieve sample data
         uses: actions/download-artifact@v4
         with:
           name: samples
 
-      # Démarrer ton application (comme tu fais déjà)
-      - name: Start frontend in Docker
+      # IMPORTANT : placer les données dans frontend/dist AVANT docker compose
+      - name: Insert sample_data.json into dist folder
+        run: |
+          cp sample_data.json frontend/dist/sample_data.json
+
+      # Lancer ton application
+      - name: Start Nginx container
         run: |
           docker compose up -d
 
-      - name: Wait for frontend
+      - name: Wait for server to be ready
         uses: docker://benel/wait-for-response:1
         with:
           args: http://localhost/ 200 30000 500
 
-      # Copie les données dans le conteneur nginx
-      - name: Inject sample_data.json into nginx
-        run: |
-          CID=$(docker ps -qf "name=static_hosting")
-          docker cp sample_data.json $CID:/usr/share/nginx/html/sample_data.json
-
-      # Installer GreenIT CLI
+      # Installer GreenIT Analysis CLI
       - name: Install GreenIT Analysis CLI
         run: |
           npm install -g @greenit/analysis-cli
 
-      # Lancer l’analyse GreenIT sur ton SCÉNARIO PRIORITAIRE
+      # Exécuter ton scénario prioritaire
       - name: Run GreenIT Analysis
         run: |
           greenit analyse --format html --headless true scenarios/buy_train_ticket.yml
 
-      # Sauvegarder les résultats en artifacts
-      - name: Upload EcoIndex results
+      # Publier les rapports
+      - name: Upload EcoIndex report
         uses: actions/upload-artifact@v4
         with:
-          name: EcoIndex
+          name: EcoIndex-report
           path: report/
-
-
