@@ -217,9 +217,10 @@ Afin que la mesure puisse être effectuée dans des délais raisonnables, nous a
 |   | EcoIndex| GES (gCO2e) | Taille du DOM | Requêtes | Taille de la page (ko)
 |---|--------:|------------:|--------------:|---------:|---------------------:
 | 1. Renseigner les critères de recherche pour son trajet | 84 A 🔵 | 1,3 | 89 | <del>7</del><br/>6 | <del>430</del><br/>418
-| 2. Consulter les trajets disponibles, et sélectionner celui de son choix | <del>87 A 🔵</del><br/>45 D 🟡 | <del>1,3</del><br/>2,1 | <del>122</del><br/>1771 | 1 | <del>10</del><br/>761
-| 3. Consulter les détails d'un trajet et l'ajouter au panier | <del>90 A 🔵</del><br/>86 A 🔵 | <del>1,2</del><br/>1,3 | 57 | 1 | <del>10</del><br/>761
-| 4. Consulter son panier et accéder au paiement | <del>91 A 🔵</del><br/>87 A 🔵 |  <del>1,2</del><br/>1,3 | 50 | 1 | <del>10</del><br/>761
+| 2. Lancer la recherche et consulter les trajets disponible, et sélectionner celui de son choix | <del>55 C 🔵</del><br/>45 D 🟡 | <del>1,9</del><br/>2,1 | <del>972</del><br/>1771 | 1 | <del>470</del><br/>761
+| 3. Selectionner son trajet | <del>87 A 🔵</del><br/>86 A 🔵 | <del>1,3</del><br/>1,3 | 57 | 1 | <del>470</del><br/>761
+| 4. Consulter les détails du trajet, | <del>92 A 🔵</del><br/>87 A 🔵 |  <del>1,2</del><br/>1,3 | 50 | 0 | <del>0</del><br/>761
+| 5. Consulter son panier et accéder au paiement | <del>88 A 🔵</del><br/>87 A 🔵 |  <del>1,2</del><br/>1,3 | 50 | 1 | <del>0</del><br/>761
 
 __Tab.6__: Effet du passage à l'échelle sur l'impact du scénario "Achat d'un billet de train" dans le prototype v1.0.1.
 
