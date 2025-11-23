@@ -212,7 +212,7 @@ De la même façon, les billets relatifs aux trajets passés ne seront pas conse
 
 Produites désormais de manière automatique lors de l'intégration continue, les mesures nécessaires à la production de l'EcoIndex, [avant](https://github.com/UTT-GL03/EcoTrain/actions/runs/19293859455/artifacts/4541500392) et [après](https://github.com/UTT-GL03/EcoTrain/actions/runs/19298418224/artifacts/4543202028) la simulation du passage à l'échelle retraduisent bien (cf. Tab.6) l'augmentation du poids des téléchargements, mais aussi de l'augmentation du nombre d'éléments de la page des titres.
 
-Afin que la mesure puisse être effectuée dans des délais raisonnables, nous avons fait le choix de n'augmenter le nombre de voyages que d'un facteur 100 (2500 maintenant, contre 25 auparavant et 45 000 en théorie)
+Afin que la mesure puisse être effectuée dans des délais raisonnables, nous avons fait le choix de n'augmenter le nombre de voyages que d'un facteur 100 1500
 
 |   | EcoIndex| GES (gCO2e) | Taille du DOM | Requêtes | Taille de la page (ko)
 |---|--------:|------------:|--------------:|---------:|---------------------:
