@@ -38,6 +38,7 @@ jobs:
           name: frontend-build
           path: frontend/dist
 
+
   # -------------------------------------------------------------
   # 2) Generate sample_data.json using dummy-json
   # -------------------------------------------------------------
@@ -58,11 +59,12 @@ jobs:
           name: samples
           path: sample_data.json
 
+
   # -------------------------------------------------------------
   # 3) Run EcoIndex analysis with GreenIT
   # -------------------------------------------------------------
   measure_ecoindex:
-    needs: 
+    needs:
       - build
       - build_samples
     runs-on: ubuntu-latest
@@ -78,39 +80,44 @@ jobs:
           name: frontend-build
           path: frontend/dist
 
-      # Récupérer le sample_data.json généré
+      # Récupérer sample_data.json
       - name: Retrieve sample data
         uses: actions/download-artifact@v4
         with:
           name: samples
 
-      # IMPORTANT : placer les données dans frontend/dist AVANT docker compose
+      # IMPORTANT : insérer sample_data.json dans dist AVANT docker compose
       - name: Insert sample_data.json into dist folder
         run: |
           cp sample_data.json frontend/dist/sample_data.json
 
-      # Lancer ton application
+      # Démarrer ton application Docker
       - name: Start Nginx container
         run: |
           docker compose up -d
 
-      - name: Wait for server to be ready
+      # Attendre qu'elle réponde
+      - name: Wait for server
         uses: docker://benel/wait-for-response:1
         with:
           args: http://localhost/ 200 30000 500
 
-      # Installer GreenIT Analysis CLI
+      # Installer GreenIT depuis GitHub (version du professeur)
       - name: Install GreenIT Analysis CLI
         run: |
-          npm install -g @greenit/analysis-cli
+          wget https://github.com/cnumr/GreenIT-Analysis-cli/archive/refs/heads/master.zip
+          unzip master.zip
+          cd GreenIT-Analysis-cli-master
+          npm install
+          npm link
 
       # Exécuter ton scénario prioritaire
       - name: Run GreenIT Analysis
         run: |
           greenit analyse --format html --headless true scenarios/buy_train_ticket.yml
 
-      # Publier les rapports
-      - name: Upload EcoIndex report
+      # Sauvegarder les rapports GreenIT
+      - name: Upload EcoIndex Report
         uses: actions/upload-artifact@v4
         with:
           name: EcoIndex-report
