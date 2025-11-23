@@ -1,6 +1,6 @@
 # To be used with GreenIT Analysis CLI
 - name: Acheter un billet de train
-  url: http://localhost/
+  url: http://127.0.0.1/
   waitForSelector: button
   actions:
     - name : Sélection de la gare de départ
