@@ -1,40 +1,52 @@
+# Scénario complet EcoTrain - Compatible DOM vidéo
 - name: Acheter un billet de train
   url: http://localhost/
   waitForSelector: 'select[name="departureStation"]'
 
   actions:
-    - name: Sélection gare départ
+
+    - name: Choisir gare de départ
       type: select
       element: 'select[name="departureStation"]'
       values: ['Paris']
 
-    - name: Sélection gare arrivée
+    - name: Choisir gare d'arrivée
       type: select
       element: 'select[name="arrivalStation"]'
       values: ['Troyes']
 
-    - name: Recherche trajet
+    - name: Choisir date
+      type: input
+      element: 'input[type="date"]'
+      value: '2025-01-01'
+
+    - name: Choisir heure
+      type: select
+      element: 'select[name="time"]'
+      values: ['00h']
+
+    - name: Rechercher un trajet
       type: click
       element: 'button[type="submit"]'
       pageChange: true
-      waitForSelector: 'article'
+      waitForSelector: 'article'   # maintenant correct car articles visibles
 
     - name: Scroll résultats
       type: scroll
 
-    - name: Sélection d’un trajet
+    - name: Sélectionner un trajet
       type: click
-      element: '.trip-card:nth-child(3) button'
+      element: 'article:nth-child(1) button'   # le bouton "Ajouter ce billet"
       pageChange: true
-      waitForSelector: '.trip-details'
+      waitForSelector: 'main'
 
-    - name: Consulter les détails
+    - name: Accéder au panier
       type: click
-      element: '.trip-details button'
+      element: 'a[href="/cart"]'
       pageChange: true
-      waitForSelector: '.pay-button'
+      waitForSelector: 'button'
 
-    - name: Accéder au paiement
+    - name: Payer
       type: click
-      element: '.pay-button button'
+      element: 'button'
       pageChange: false
