@@ -96,6 +96,11 @@ jobs:
         run: |
           docker compose up -d
 
+      - name: Debug sample_data.json served
+        run: |
+          echo ">>> Checking JSON served from container"
+          curl -s http://localhost/sample_data.json | head -n 20
+
       # Attendre qu'elle réponde
       - name: Wait for server
         uses: docker://benel/wait-for-response:1
