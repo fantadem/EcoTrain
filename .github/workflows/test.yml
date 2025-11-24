@@ -1,52 +1,88 @@
 name: Test
-
 on:
   push:
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # 1) Télécharger le code
       - name: Download sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      # 2) Installer Node.js
       - name: Set up NodeJS
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # 3) Installer les dépendances
       - name: Install frontend dependencies
         run: |
           cd frontend
           npm install
 
-      # 4) Construire l'application
+      - name: Generate sample_data.json (scaled data)
+        run: |
+          npx --yes dummy-json sample_data.hbs > frontend/public/sample_data.json
+
       - name: Build frontend
         run: |
           cd frontend
           npm run build
 
-      # 5) Vérifier que Docker Compose est disponible
-      - name: Check docker compose
-        run: docker compose version
+      - name: Save built frontend
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
 
-      # 6) Démarrer Nginx + ton application
-      - name: Start frontend
+  measure_ecoindex:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download sources
+        uses: actions/checkout@v4
+
+      - name: Download built frontend
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
+
+      - name: Start application (Docker Compose + Wait)
         run: |
           docker compose up --detach
 
-      # 7) Attendre que l'application réponde
-      - name: Wait for frontend
-        uses: docker://benel/wait-for-response:1
-        with:
-          args: http://localhost/ 200 30000 500
+          echo "Waiting for http://localhost ..."
+          for i in {1..40}; do
+            curl --silent --fail --max-time 5 http://localhost >/dev/null 2>&1
+            if [ $? -eq 0 ]; then
+              echo "Application is ready!"
+              exit 0
+            fi
+            echo "Still waiting... ($i/40)"
+            sleep 3
+          done
 
-      # 8) Vérifier que la page d'accueil répond vraiment
-      - name: Watch frontend initial payload
-        run: curl --silent http://localhost
+          echo "ERROR: Application did not start in time."
+          exit 1
+
+      - name: Install GreenIT Analysis CLI
+        run: |
+          wget https://github.com/cnumr/GreenIT-Analysis-cli/archive/refs/heads/master.zip
+          unzip master.zip
+          cd GreenIT-Analysis-cli-master
+          npm install
+          npm link
+
+      - name: Run GreenIT Analysis
+        run: |
+          greenit analyse --format html --ci scenarios/buy_train_ticket.yml
+
+      - name: Upload EcoIndex report
+        uses: actions/upload-artifact@v4
+        with:
+          name: EcoIndex-Report
+          path: Acheterunbilletdetrain.html
