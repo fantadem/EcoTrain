@@ -1,19 +1,24 @@
 name: Test
+
 on:
   push:
 
 jobs:
 
+  # -------------------------------------------------------------
+  # 1) Build frontend
+  # -------------------------------------------------------------
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Download sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up NodeJS
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
@@ -22,53 +27,82 @@ jobs:
           cd frontend
           npm install
 
-      - name: Generate sample_data.json (scaled data)
-        run: |
-          npx --yes dummy-json sample_data.hbs > frontend/public/sample_data.json
-
       - name: Build frontend
         run: |
           cd frontend
           npm run build
 
-      - name: Save built frontend
+      - name: Save frontend build as artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist
 
-  measure_ecoindex:
-    needs: build
+
+  # -------------------------------------------------------------
+  # 2) Generate sample_data.json using dummy-json
+  # -------------------------------------------------------------
+  build_samples:
     runs-on: ubuntu-latest
 
     steps:
       - name: Download sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Download built frontend
+      - name: Generate sample_data.json
+        run: |
+          npx --yes dummy-json sample_data.hbs > sample_data.json
+
+      - name: Save samples as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: samples
+          path: sample_data.json
+
+
+  # -------------------------------------------------------------
+  # 3) Run EcoIndex analysis with GreenIT
+  # -------------------------------------------------------------
+  measure_ecoindex:
+    needs:
+      - build
+      - build_samples
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download sources
+        uses: actions/checkout@v5
+
+      # Récupérer le build du frontend
+      - name: Retrieve frontend build
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist
 
-      - name: Start application (Docker Compose + Wait)
+      # Récupérer sample_data.json
+      - name: Retrieve sample data
+        uses: actions/download-artifact@v4
+        with:
+          name: samples
+
+      # IMPORTANT : insérer sample_data.json dans dist AVANT docker compose
+      - name: Insert sample_data.json into dist folder
         run: |
-          docker compose up --detach
+          cp sample_data.json frontend/dist/sample_data.json
 
-          echo "Waiting for http://localhost ..."
-          for i in {1..40}; do
-            curl --silent --fail --max-time 5 http://localhost >/dev/null 2>&1
-            if [ $? -eq 0 ]; then
-              echo "Application is ready!"
-              exit 0
-            fi
-            echo "Still waiting... ($i/40)"
-            sleep 3
-          done
+      # Démarrer ton application Docker
+      - name: Start Nginx container
+        run: |
+          docker compose up -d
 
-          echo "ERROR: Application did not start in time."
-          exit 1
+      # Attendre qu'elle réponde
+      - name: Wait for server
+        uses: docker://benel/wait-for-response:1
+        with:
+          args: http://localhost/ 200 30000 500
 
+      # Installer GreenIT depuis GitHub (version du professeur)
       - name: Install GreenIT Analysis CLI
         run: |
           wget https://github.com/cnumr/GreenIT-Analysis-cli/archive/refs/heads/master.zip
@@ -77,12 +111,14 @@ jobs:
           npm install
           npm link
 
+      # Exécuter ton scénario prioritaire
       - name: Run GreenIT Analysis
         run: |
-          greenit analyse --format html --ci scenarios/buy_train_ticket.yml
+          greenit analyse --format html --headless true scenarios/buy_train_ticket.yml
 
-      - name: Upload EcoIndex report
+      # Sauvegarder les rapports GreenIT
+      - name: Upload EcoIndex Report
         uses: actions/upload-artifact@v4
         with:
-          name: EcoIndex-Report
-          path: Acheterunbilletdetrain.html
+          name: EcoIndex-report
+          path: report/
