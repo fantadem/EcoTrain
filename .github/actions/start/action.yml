@@ -1,18 +1,35 @@
 name: Start application
-description: Once done, the application is ready on `localhost:80`.
+description: Start docker-compose and prepare application on localhost
 
 runs:
   using: composite
   steps:
-    - name: Get frontend build
+    - name: Retrieve frontend build
       uses: actions/download-artifact@v4
       with:
         name: frontend-build
         path: frontend/dist
+
+    - name: Retrieve sample data
+      uses: actions/download-artifact@v4
+      with:
+        name: samples
+        path: .
+
+    - name: Insert sample_data.json into dist folder
+      run: |
+        cp sample_data.json frontend/dist/sample_data.json
+        echo "=== Contenu de frontend/dist ==="
+        ls -la frontend/dist/
+      shell: bash
+
     - name: Start containers
       run: |
-        docker compose up --detach
+        docker compose up -d
+        echo "=== Containers en cours d'exécution ==="
+        docker compose ps
       shell: bash
+
     - name: Wait for frontend
       uses: docker://benel/wait-for-response:1
       with:
