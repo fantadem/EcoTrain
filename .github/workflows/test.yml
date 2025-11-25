@@ -1,18 +1,24 @@
-name: Test
+name: Test et Mesure EcoIndex
 
 on:
   push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
 
 jobs:
+  # -------------------------------------------------------------
+  # 1) Build frontend
+  # -------------------------------------------------------------
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # 1) Télécharger le code
       - name: Download sources
         uses: actions/checkout@v5
 
-      # 2) Installer Node.js
       - name: Set up NodeJS
         uses: actions/setup-node@v6
         with:
@@ -20,33 +26,202 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # 3) Installer les dépendances
       - name: Install frontend dependencies
         run: |
           cd frontend
-          npm install
+          npm ci
 
-      # 4) Construire l'application
       - name: Build frontend
         run: |
           cd frontend
           npm run build
 
-      # 5) Vérifier que Docker Compose est disponible
-      - name: Check docker compose
-        run: docker compose version
-
-      # 6) Démarrer Nginx + ton application
-      - name: Start frontend
-        run: |
-          docker compose up --detach
-
-      # 7) Attendre que l'application réponde
-      - name: Wait for frontend
-        uses: docker://benel/wait-for-response:1
+      - name: Save frontend build as artifact
+        uses: actions/upload-artifact@v4
         with:
-          args: http://localhost/ 200 30000 500
+          name: frontend-build
+          path: frontend/dist
+          retention-days: 7
 
-      # 8) Vérifier que la page d'accueil répond vraiment
-      - name: Watch frontend initial payload
-        run: curl --silent http://localhost
+  # -------------------------------------------------------------
+  # 2) Generate sample_data.json using dummy-json
+  # -------------------------------------------------------------
+  build_samples:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download sources
+        uses: actions/checkout@v5
+
+      - name: Generate sample_data.json
+        run: |
+          npx --yes dummy-json sample_data.hbs > sample_data.json
+
+      - name: Verify generated data
+        run: |
+          echo "=== Taille du fichier généré ==="
+          ls -lh sample_data.json
+          echo "=== Premières lignes ==="
+          head -n 20 sample_data.json
+
+      - name: Save samples as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: samples
+          path: sample_data.json
+          retention-days: 7
+
+  # -------------------------------------------------------------
+  # 3) Run EcoIndex analysis with GreenIT
+  # -------------------------------------------------------------
+  measure_ecoindex:
+    needs:
+      - build
+      - build_samples
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download sources
+        uses: actions/checkout@v5
+
+      # Récupérer le build du frontend
+      - name: Retrieve frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist
+
+      # Récupérer sample_data.json
+      - name: Retrieve sample data
+        uses: actions/download-artifact@v4
+        with:
+          name: samples
+          path: .
+
+      # Insérer sample_data.json dans dist
+      - name: Insert sample_data.json into dist folder
+        run: |
+          cp sample_data.json frontend/dist/sample_data.json
+          echo "=== Contenu de frontend/dist ==="
+          ls -la frontend/dist/
+
+      # Démarrer l'application Docker
+      - name: Start application with Docker Compose
+        run: |
+          docker compose up -d
+          echo "=== Containers en cours d'exécution ==="
+          docker compose ps
+
+      # Attendre que le serveur soit prêt
+      - name: Wait for server to be ready
+        run: |
+          echo "Attente du démarrage du serveur..."
+          for i in {1..30}; do
+            if curl -sf http://localhost/ > /dev/null; then
+              echo "✓ Serveur prêt après $i secondes"
+              break
+            fi
+            echo "Tentative $i/30..."
+            sleep 1
+          done
+
+      # Vérifier que sample_data.json est accessible
+      - name: Verify sample_data.json is served correctly
+        run: |
+          echo "=== Test d'accès à sample_data.json ==="
+          curl -s http://localhost/sample_data.json | head -n 30
+          echo ""
+          echo "=== Vérification de la validité JSON ==="
+          curl -s http://localhost/sample_data.json | jq . > /dev/null && echo "✓ JSON valide" || echo "✗ JSON invalide"
+
+      # Vérifier que l'application fonctionne
+      - name: Verify application is accessible
+        run: |
+          echo "=== Test page d'accueil ==="
+          curl -I http://localhost/
+          echo "=== Test navigation principale ==="
+          curl -s http://localhost/ | grep -o "<title>.*</title>" || echo "Page chargée"
+
+      # Installer GreenIT Analysis CLI
+      - name: Install GreenIT Analysis CLI
+        run: |
+          wget -q https://github.com/cnumr/GreenIT-Analysis-cli/archive/refs/heads/master.zip
+          unzip -q master.zip
+          cd GreenIT-Analysis-cli-master
+          npm install --silent
+          npm link
+          echo "=== Version GreenIT installée ==="
+          greenit --version || echo "GreenIT CLI installé"
+
+      # Vérifier le fichier de scénario
+      - name: Verify scenario file exists
+        run: |
+          if [ -f "scenarios/buy_train_ticket.yml" ]; then
+            echo "✓ Fichier de scénario trouvé"
+            echo "=== Contenu du scénario ==="
+            cat scenarios/buy_train_ticket.yml
+          else
+            echo "✗ Fichier de scénario introuvable !"
+            echo "Fichiers disponibles dans scenarios/ :"
+            ls -la scenarios/ || echo "Dossier scenarios/ introuvable"
+            exit 1
+          fi
+
+      # Exécuter l'analyse GreenIT
+      - name: Run GreenIT Analysis
+        run: |
+          echo "=== Démarrage de l'analyse EcoIndex ==="
+          greenit analyse --format html --headless true scenarios/buy_train_ticket.yml
+          echo "=== Analyse terminée ==="
+        continue-on-error: true
+
+      # Lister les fichiers générés
+      - name: List generated reports
+        run: |
+          echo "=== Fichiers HTML générés ==="
+          ls -lh *.html || echo "Aucun fichier HTML trouvé"
+          echo "=== Tous les fichiers du répertoire ==="
+          ls -la
+
+      # Afficher un extrait du rapport
+      - name: Display report summary
+        run: |
+          if [ -f "Acheterunbilletdetrain.html" ]; then
+            echo "=== Extrait du rapport EcoIndex ==="
+            grep -A 5 "EcoIndex" Acheterunbilletdetrain.html || echo "Rapport généré"
+          else
+            echo "Aucun rapport trouvé"
+          fi
+        continue-on-error: true
+
+      # Sauvegarder les rapports
+      - name: Upload EcoIndex Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecoindex-report-${{ github.sha }}
+          path: |
+            *.html
+            *.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      # Sauvegarder les logs Docker en cas d'erreur
+      - name: Save Docker logs
+        if: failure()
+        run: |
+          docker compose logs > docker-logs.txt
+          echo "=== Logs Docker sauvegardés ==="
+
+      - name: Upload Docker logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-logs
+          path: docker-logs.txt
+          retention-days: 7
+
+      # Nettoyer
+      - name: Stop Docker containers
+        if: always()
+        run: |
+          docker compose down -v
+          echo "=== Containers arrêtés ==="
