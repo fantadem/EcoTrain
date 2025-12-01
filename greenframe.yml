@@ -6,5 +6,5 @@ scenarios:
   - name: Consulter des résultats de recherche
     path: ./scenarios/consult_results.js
 containers:
-  - ecotrain-static_hosting-1
-  - ecotrain-backend-1
+  - static_hosting
+  - backend
