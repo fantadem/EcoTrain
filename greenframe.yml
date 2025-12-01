@@ -8,3 +8,4 @@ scenarios:
 containers:
   - static_hosting
   - backend
+samples: 3
