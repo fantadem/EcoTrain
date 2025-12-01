@@ -4,7 +4,7 @@ projectName: EcoTrain
 scenarios:
   - name: Consulter la page d'accueil
     path: ./scenarios/consult_index.js
-  - name: Consulter des résultats de recherche
+  - name: Consulter des resultats de recherche
     path: ./scenarios/consult_results.js
 
 containers:
