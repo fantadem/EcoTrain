@@ -1,4 +1,4 @@
-baseURL: http://localhost
+baseURL: http://localhost/
 projectName: EcoTrain
 scenarios:
   - name: Consulter la page d'accueil
