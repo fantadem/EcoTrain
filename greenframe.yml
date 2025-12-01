@@ -7,5 +7,4 @@ scenarios:
     path: ./scenarios/consult_results.js
 containers:
   - static_hosting
-  - backend
 samples: 3
