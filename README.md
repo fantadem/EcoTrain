@@ -227,3 +227,48 @@ __Tab.6__: Effet du passage à l'échelle sur l'impact du scénario "Achat d'un 
 On constate que la baisse de l'EcoIndex est la plus importante à l'affichage des résultats de recherche. Cela semble cohérent puisque c'est sur cette page qu'un grand nombre d'éléments (propositions de voyage de la base de données) va apparaître.
 
 Pour évaluer plus précisément l'impact de la consultation des détails d'un trajet, nous utiliserons un autre outil de mesure : GreenFrame.
+
+### Mesure de la consommation énergétique liée à la consultation
+
+Le logiciel GreenFrame est capable d'estimer, pour les différents composants de l'architecture, la consommation énergétique :
+
+- du CPU (à partir du temps de calcul),
+- de la mémoire vive (à partir de la taille des données mémorisées),
+- du disque (à partir de la taille des données lues et écrites),
+- du réseau (à partir de la taille des données reçues et envoyées),
+- pour le navigateur uniquement, de l'écran (à partir du temps d'exécution du scénario).
+
+
+|   (a)  Consultation de la page d’accueil               | cpu (Wh)   | mem (Wh)   | disk (Wh) | network (Wh)       | screen (Wh) | total (Wh)   |
+| ------------------ | ---------- | ---------- | --------- | ------------------ | ----------- | ------------ | 
+| Navigateur         | 0.0018     | 0.00015   | 0.0       | <mark>0.026</mark> | <mark>0.069</mark> | 0.073  |
+| Serveur Web        | 0.000022   | 0.0000075   | 0.0       | <mark>0.019</mark> | 0.0                | 0.020 |
+
+#### Total : 0.075 Wh (75.211 mWh), soit 33.243 mg CO₂e ± 3.2%
+
+
+| (b) Consultation des résultats de recherche               | cpu (Wh)   | mem (Wh)   | disk (Wh) | network (Wh)       | screen (Wh)        | total (Wh) |
+| ------------------ | ---------- | ---------- | --------- | ------------------ | ------------------ | ---------- | 
+| Navigateur         | 0.0012     |  0.000079  |  0.0      | <mark>0.0058</mark> | <mark>0.082</mark> |  0.99      |
+| Serveur Web        | 0.000026   |  0.0000089  |  0.0      | <mark>0.045</mark> | 0.0                |  0.0046     |
+
+#### Total : 0.104 Wh (103.932 mWh), soit 45.938 mg CO₂e ± 1.6%
+
+__Tab.7__: Estimation de la consommation énergétique de la page d'accueil (premier tableau) et de la consultation des trajets affichés (second tableau).
+
+Par rapport à ce que pouvait laisser penser une simple analyse par l’EcoIndex, les résultats obtenus avec GreenFrame montrent que la consultation de la page d’accueil et la consultation des résultats de recherche présentent des impacts énergétiques relativement proches : 0.075 Wh pour l’accueil et 0.104 Wh pour la page de résultats (cf. tableau).
+Autrement dit, même si la page de résultats contient davantage d’informations à afficher, l’impact lié au rendu de l’interface reste largement dominé par d’autres composants, notamment le navigateur lui-même.
+
+Les mesures indiquent en effet que l’affichage dans le navigateur (énergie écran) constitue la part la plus importante de l’empreinte, devant la consommation CPU ou mémoire. Le coût total du serveur web, quant à lui, reste très faible : dans les deux scénarios, il n’atteint que quelques milli-Wh, ce qui montre que le poids énergétique principal ne provient pas du backend, mais bien de l’exécution du scénario dans le navigateur utilisateur.
+
+Un autre résultat intéressant est que la transmission des données sur le réseau reste un poste significatif. Dans nos scénarios, la consommation réseau du navigateur et du serveur représente une contribution non négligeable à l’empreinte totale, notamment pour la page de résultats qui implique plus de réponses HTTP.
+
+En résumé, les trois composantes ayant le plus d’impact (à peu près à égalité, les autres étant négligeables) sont :
+
+l’écran du client (screen Wh, fortement influencé par la durée du scénario),
+
+le réseau côté client,
+
+le réseau côté serveur.
+
+Ce résultat confirme que l’optimisation la plus pertinente pour les prochaines étapes ne concerne pas seulement l’amélioration du code frontend, mais surtout la réduction du volume et de la fréquence des données transmises, ce que permettra l’introduction de CouchDB et du filtrage côté serveur.
