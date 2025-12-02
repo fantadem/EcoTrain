@@ -1,17 +1,12 @@
-baseURL: http://10.192.54.37
+baseURL: http://localhost
 projectName: EcoTrain
-
 scenarios:
-  - name: Page accueil
+  - name: Consulter la page d'accueil
     path: ./scenarios/consult_index.js
-  - name: Resultats recherche
+  - name: Consulter des résultats de recherche
     path: ./scenarios/consult_results.js
-
+  - name: Consulter les détails d'un trajet
+    path: ./scenarios/consult_details.js
 containers:
-  - static_hosting
-
-samples: 3
-
-# Forcer l'utilisation du réseau Docker
-useContainerNetwork: true
-networkName: greenframe
+  - ecotrain-static_hosting-1
+  - ecotrain-backend-1
