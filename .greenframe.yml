@@ -9,4 +9,3 @@ scenarios:
     path: ./scenarios/consult_details.js
 containers:
   - ecotrain-static_hosting-1
-  - ecotrain-backend-1
