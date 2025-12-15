@@ -272,3 +272,5 @@ le réseau côté client,
 le réseau côté serveur.
 
 Ce résultat confirme que l’optimisation la plus pertinente pour les prochaines étapes ne concerne pas seulement l’amélioration du code frontend, mais surtout la réduction du volume et de la fréquence des données transmises, ce que permettra l’introduction de CouchDB et du filtrage côté serveur.
+
+# Effet de l'introduction d'une base de données
