@@ -16,13 +16,60 @@ services:
     environment:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=admin
-    volumes:
-      - couchdb_data:/opt/couchdb/data
     networks:
       - greenframe
+    healthcheck:
+      test: curl -f http://localhost:5984/_up || exit 1
+      start_period: 10s
+      start_interval: 2s
 
-volumes:
-  couchdb_data:
+  accessible_backend:
+    image: curlimages/curl
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        alias put="curl -X PUT -u 'admin:password'"
+        
+        echo "Configuration CORS..."
+        put backend:5984/_node/nonode@nohost/_config/chttpd/enable_cors --data '"true"'
+        put backend:5984/_node/nonode@nohost/_config/cors/origins --data '"*"'
+        put backend:5984/_node/nonode@nohost/_config/cors/credentials --data '"true"'
+        put backend:5984/_node/nonode@nohost/_config/cors/methods --data '"GET, PUT, POST, HEAD, DELETE"'
+        put backend:5984/_node/nonode@nohost/_config/cors/headers --data '"accept, authorization, content-type, origin, referer"'
+        
+        echo "Creation des bases de donnees..."
+        put backend:5984/_users
+        put backend:5984/_replicator
+        put backend:5984/ecotrain
+        
+        echo "Configuration des permissions..."
+        put backend:5984/ecotrain/_security --data '{"members":{"roles":[]},"admins":{"roles":["_admin"]}}'
+        
+        echo "Configuration terminee"
+    networks:
+      - greenframe
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  updated_samples:
+    image: curlimages/curl
+    entrypoint: ["/bin/sh", "-c"]
+    volumes:
+      - ./frontend/dist/sample_data.json:/sample_data.json:ro
+    command:
+      - |
+        echo "Envoi des donnees d'exemple..."
+        curl -X POST http://backend:5984/ecotrain/_bulk_docs \
+          -H "Content-Type: application/json" \
+          -d @/sample_data.json \
+          -u 'admin:password'
+        echo "Donnees envoyees"
+    networks:
+      - greenframe
+    depends_on:
+      accessible_backend:
+        condition: service_completed_successfully
 
 networks:
   greenframe:
