@@ -28,12 +28,17 @@ function TripDetails({ }) {
   const [selectedClass, setSelectedClass] = useState('second');
 
   useEffect(() => {
-    fetch('/sample_data.json')
-    .then (x => x.json())
+  fetch('http://localhost:5984/ecotrain/_all_docs?include_docs=true')
+    .then(x => x.json())
     .then(data => {
-      setTrip(data.trips.find(x => trip_id === x.trip_id))
-    }
-  )},[trip_id])
+      const trips = data.rows.map(row => row.doc);
+      const foundTrip = trips.find(x => trip_id === x.trip_id);
+      setTrip(foundTrip || {});
+    })
+    .catch(error => {
+      console.error('Erreur lors du chargement des données:', error);
+    });
+}, [trip_id])
   
   const { datetimearrival, datetimedeparture, formattedDuration } = calculateTripTimes(trip);
   const priceSecond = Number(trip.price_second ?? 0);
@@ -109,5 +114,6 @@ function TripDetails({ }) {
     </div>
   );
 }
+
 
 export default TripDetails
