@@ -1,5 +1,4 @@
 services:
-
   static_hosting:
     image: nginx
     volumes:
@@ -9,6 +8,43 @@ services:
       - 80:80
     networks:
       - greenframe
+    depends_on:
+      couchdb:
+        condition: service_healthy
+
+  couchdb:
+    image: couchdb:latest
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=admin
+    ports:
+      - 5984:5984
+    volumes:
+      - couchdb_data:/opt/couchdb/data
+      - ./settings/couchdb-config.ini:/opt/couchdb/etc/local.d/custom.ini:ro
+    networks:
+      - greenframe
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5984/_up"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  couchdb_init:
+    image: curlimages/curl:latest
+    depends_on:
+      couchdb:
+        condition: service_healthy
+    networks:
+      - greenframe
+    volumes:
+      - ./frontend/dist/sample_data.json:/data/sample_data.json:ro
+      - ./settings/init-couchdb.sh:/init-couchdb.sh:ro
+    entrypoint: ["/bin/sh", "/init-couchdb.sh"]
+
+volumes:
+  couchdb_data:
+
 networks:
   greenframe:
     name: greenframe
