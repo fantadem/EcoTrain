@@ -1,16 +1,4 @@
 services:
-  frontend_builder:
-    image: node:20
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
-    command: >
-      sh -c "
-      rm -rf node_modules package-lock.json &&
-      npm install &&
-      npm run build
-      "
-
   static_hosting:
     image: nginx
     volumes:
@@ -20,9 +8,6 @@ services:
       - 80:80
     networks:
       - greenframe
-    depends_on:
-      frontend_builder:
-        condition: service_completed_successfully
 
   backend:
     image: couchdb:3
@@ -31,45 +16,13 @@ services:
     environment:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=admin
-    networks:
-      - greenframe
-    healthcheck:
-      test: curl -f http://localhost:5984/_up || exit 1
-      start_period: 10s
-      start_interval: 2s
-
-  accessible_backend:
-    image: curlimages/curl
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        alias put="curl -X PUT -u 'admin:password'"
-        put backend:5984/_node/nonode@nohost/_config/chttpd/enable_cors --data '"true"'
-        put backend:5984/_node/nonode@nohost/_config/cors/origins --data '"*"'
-        put backend:5984/_node/nonode@nohost/_config/cors/credentials --data '"true"'
-        put backend:5984/_node/nonode@nohost/_config/cors/methods --data '"GET, PUT, POST, HEAD, DELETE"'
-        put backend:5984/_node/nonode@nohost/_config/cors/headers --data '"accept, authorization, content-type, origin, referer"'
-        put backend:5984/ecotrain
-        put backend:5984/ecotrain/_security --data '{"members":{"roles":[]},"admins":{"roles":["_admin"]}}'
-    networks:
-      - greenframe
-    depends_on:
-      backend:
-        condition: service_healthy
-
-  updated_samples:
-    image: curlimages/curl
-    entrypoint: ["/bin/sh", "-c"]
     volumes:
-      - ./frontend/dist/sample_data.json:/sample_data.json
-    command:
-      - |
-        curl -X POST http://backend:5984/ecotrain/_bulk_docs -H "Content-Type: application/json" -d @/sample_data.json -u 'admin:password'
+      - couchdb_data:/opt/couchdb/data
     networks:
       - greenframe
-    depends_on:
-      accessible_backend:
-        condition: service_completed_successfully
+
+volumes:
+  couchdb_data:
 
 networks:
   greenframe:
