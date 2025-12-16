@@ -1,4 +1,16 @@
 services:
+  frontend_builder:
+    image: node:20
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: >
+      sh -c "
+      rm -rf node_modules package-lock.json &&
+      npm install &&
+      npm run build
+      "
+
   static_hosting:
     image: nginx
     volumes:
@@ -8,6 +20,9 @@ services:
       - 80:80
     networks:
       - greenframe
+    depends_on:
+      frontend_builder:
+        condition: service_completed_successfully
 
   backend:
     image: couchdb:3
@@ -59,4 +74,3 @@ services:
 networks:
   greenframe:
     name: greenframe
-
