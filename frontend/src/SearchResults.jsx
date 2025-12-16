@@ -52,18 +52,18 @@ function SearchResults({}) {
     navigate(`/trips?${params}`);
   }
 
- useEffect(() => {
-  fetch('http://localhost:5984/ecotrain/_all_docs?include_docs=true')
-    .then(x => x.json())
-    .then(data => {
-      // Extraire les documents depuis data.rows
-      const trips = data.rows.map(row => row.doc);
-      setResults(trips);
-    })
-    .catch(error => {
-      console.error('Erreur lors du chargement des données:', error);
-    });
-}, [])
+  useEffect(() => {
+    fetch('http://localhost:5984/ecotrain/_all_docs?include_docs=true')
+      .then(x => x.json())
+      .then(data => {
+        // Extraire les documents depuis data.rows
+        const trips = data.rows.map(row => row.doc);
+        setResults(trips);
+      })
+      .catch(error => {
+        console.error('Erreur lors du chargement des données:', error);
+      });
+  }, [])
 
   const filtered = useMemo(() => {
     if (!results || results.length === 0) return [];
@@ -127,12 +127,12 @@ function SearchResults({}) {
       </section>
       <h2>Voyages trouvés :</h2>
       {filtered.length === 0 && (<p>Aucun trajet ne correspond à votre recherche.</p>)}
-      {filtered.map((x, i) => <SearchResult {...x} key={i} passengers={passengers} />)}
+      {filtered.map((x) => <SearchResult {...x} key={x._id} passengers={passengers} />)}
     </section>
   )
 }
 
-function SearchResult({datetime_arrival, datetime_departure, station_arrival, station_departure, price_second, trip_id, passengers}) {
+function SearchResult({_id, datetime_arrival, datetime_departure, station_arrival, station_departure, price_second, passengers}) {
   const datetimearrival = dayjs(datetime_arrival);
   const datetimedeparture = dayjs(datetime_departure);
   const durationInMinutes = datetimearrival.diff(datetimedeparture, 'minute');
@@ -163,7 +163,7 @@ function SearchResult({datetime_arrival, datetime_departure, station_arrival, st
             <div style={{ marginBottom: '0.25rem', fontWeight: 700, fontSize: '1.1rem' }}>
               Total pour {passengers} passager{passengers > 1 ? 's' : ''} : {totalAllPassengers}€
             </div>
-            <Link to={`${trip_id}?passengers=${(new URLSearchParams(window.location.search)).get('passengers') || '1'}`}>
+            <Link to={`${_id}?passengers=${(new URLSearchParams(window.location.search)).get('passengers') || '1'}`}>
               <button className="outline">À partir de {perPassenger}€ / passager</button>
             </Link>
           </div>
@@ -172,6 +172,5 @@ function SearchResult({datetime_arrival, datetime_departure, station_arrival, st
     </article >
   )
 }
-
 
 export default SearchResults;
