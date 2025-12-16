@@ -28,7 +28,7 @@ function TripDetails({ }) {
   const [selectedClass, setSelectedClass] = useState('second');
 
   useEffect(() => {
-  fetch('http://localhost:5984/ecotrain/_all_docs?include_docs=true')
+  fetch('http://localhost:5984/ecotrain/')
     .then(x => x.json())
     .then(data => {
       const trips = data.rows.map(row => row.doc);
