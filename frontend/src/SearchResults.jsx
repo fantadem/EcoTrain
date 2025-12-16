@@ -52,13 +52,18 @@ function SearchResults({}) {
     navigate(`/trips?${params}`);
   }
 
-  useEffect(() => {
-    fetch('/sample_data.json')
-      .then(x => x.json())
-      .then(data => {
-        setResults(data.trips)
-      })
-  }, [])
+ useEffect(() => {
+  fetch('http://localhost:5984/ecotrain/_all_docs?include_docs=true')
+    .then(x => x.json())
+    .then(data => {
+      // Extraire les documents depuis data.rows
+      const trips = data.rows.map(row => row.doc);
+      setResults(trips);
+    })
+    .catch(error => {
+      console.error('Erreur lors du chargement des données:', error);
+    });
+}, [])
 
   const filtered = useMemo(() => {
     if (!results || results.length === 0) return [];
@@ -167,5 +172,6 @@ function SearchResult({datetime_arrival, datetime_departure, station_arrival, st
     </article >
   )
 }
+
 
 export default SearchResults;
