@@ -11,26 +11,27 @@ function Cart() {
   const passengers = Math.max(1, parseInt(params.passengers || '1', 10));
 
   useEffect(() => {
-    fetch('/sample_data.json')
-      .then(x => x.json())
-      .then(data => {
-        const byId = data.trips.find(t => t.trip_id === params.trip_id);
-        setTrip(byId || data.trips[0]);
-        setSelectedClass(params.class === 'first' ? 'first' : 'second');
-      }
-    )},[])
-  
+    const _id = params._id;
+    if (_id) {
+      fetch(`http://localhost:5984/ecotrain/${_id}`)
+        .then(x => x.json())
+        .then(data => {
+          setTrip(data);
+          setSelectedClass(params.class === 'first' ? 'first' : 'second');
+        })
+        .catch(error => {
+          console.error('Error fetching trip:', error);
+        });
+    }
+  }, [params._id, params.class])
 
-const datetimedeparture = dayjs(trip.datetime_departure);
-const datetimearrival = dayjs(trip.datetime_arrival);
-const durationInMinutes = datetimearrival.diff(datetimedeparture, 'minute');
-const hours = Math.floor(durationInMinutes / 60);
-const minutes = durationInMinutes % 60;
-const formattedDuration = `${hours}h${minutes.toString().padStart(2, '0')}`;
-const priceSecond = Number(trip.price_second ?? 0);
-const priceFirst = Number(trip.price_first ?? 0);
-const selectedPrice = selectedClass === 'first' ? priceFirst : priceSecond;
-const totalPrice = selectedPrice * passengers;
+  const datetimedeparture = dayjs(trip.datetime_departure);
+  const datetimearrival = dayjs(trip.datetime_arrival);
+  const duration = trip.duration;
+  const priceSecond = Number(trip.price_second ?? 0);
+  const priceFirst = Number(trip.price_first ?? 0);
+  const selectedPrice = selectedClass === 'first' ? priceFirst : priceSecond;
+  const totalPrice = selectedPrice * passengers;
 
   return (
     <section className="container">
@@ -44,7 +45,7 @@ const totalPrice = selectedPrice * passengers;
                 <br />
                 <time>{datetimearrival.format('HH:mm')}</time>
                 <br />
-                <time>Durée : {formattedDuration}</time>
+                <time>Durée : {duration}</time>
               </div>
               <div>
                 <span>{trip.station_departure}</span>

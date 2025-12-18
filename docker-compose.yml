@@ -15,7 +15,7 @@ services:
       - 5984:5984
     environment:
       - COUCHDB_USER=admin
-      - COUCHDB_PASSWORD=admin
+      - COUCHDB_PASSWORD=password
     networks:
       - greenframe
     healthcheck:
@@ -28,24 +28,14 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        alias put="curl -X PUT -u 'admin:password'"
-        
-        echo "Configuration CORS..."
+        alias put='curl -X PUT -u admin:password'
         put backend:5984/_node/nonode@nohost/_config/chttpd/enable_cors --data '"true"'
         put backend:5984/_node/nonode@nohost/_config/cors/origins --data '"*"'
         put backend:5984/_node/nonode@nohost/_config/cors/credentials --data '"true"'
-        put backend:5984/_node/nonode@nohost/_config/cors/methods --data '"GET, PUT, POST, HEAD, DELETE"'
-        put backend:5984/_node/nonode@nohost/_config/cors/headers --data '"accept, authorization, content-type, origin, referer"'
-        
-        echo "Creation des bases de donnees..."
         put backend:5984/_users
         put backend:5984/_replicator
         put backend:5984/ecotrain
-        
-        echo "Configuration des permissions..."
         put backend:5984/ecotrain/_security --data '{"members":{"roles":[]},"admins":{"roles":["_admin"]}}'
-        
-        echo "Configuration terminee"
     networks:
       - greenframe
     depends_on:
@@ -56,15 +46,10 @@ services:
     image: curlimages/curl
     entrypoint: ["/bin/sh", "-c"]
     volumes:
-      - ./frontend/dist/sample_data.json:/sample_data.json:ro
+      - ./frontend/dist/sample_data.json:/sample_data.json
     command:
       - |
-        echo "Envoi des donnees d'exemple..."
-        curl -X POST http://backend:5984/ecotrain/_bulk_docs \
-          -H "Content-Type: application/json" \
-          -d @/sample_data.json \
-          -u 'admin:password'
-        echo "Donnees envoyees"
+        curl -X POST http://backend:5984/ecotrain/_bulk_docs -H "Content-Type: application/json" -d @/sample_data.json -u admin:password
     networks:
       - greenframe
     depends_on:

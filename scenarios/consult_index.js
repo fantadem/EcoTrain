@@ -1,5 +1,5 @@
 const visit = async (page) => {
-    await page.goto('', {
+    await page.goto('http://127.0.0.1', {
         waitUntil: 'networkidle',
     });
     await page.waitForTimeout(10000);
@@ -9,3 +9,5 @@ const visit = async (page) => {
   };
   
   module.exports = visit;
+
+  
