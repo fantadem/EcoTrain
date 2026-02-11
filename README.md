@@ -345,7 +345,12 @@ Fig.7 : Chargement progressif (à la demande) des résultats de recherche (captu
 Tab.10 : Effet sur la consommation énergétique du chargement progressif (à la demande) lors de la consultation des résultats de recherche.
 
 L'implémentation de la stratégie en question (v2.0.1, cf. Fig.7) a produit l'effet attendu (cf. Tab.10) : la consommation électrique a significativement diminué avec la réduction du nombre de résultats affichés, passant de 48.39 mg CO₂ à 34.51 mg CO₂, soit une réduction de 28.7%.
+
 Cette amélioration provient principalement de la réduction du temps d'affichage et du nombre d'éléments DOM à traiter par le navigateur. La base de données consomme désormais 5 fois moins d'énergie grâce au filtrage et à la limitation des résultats côté serveur.
+
 Pour résumer, le passage à l'échelle de 15 à 1500 trajets disponibles avait entraîné une augmentation de la consommation électrique. Par des techniques simples de base de données (sélection du document pertinent, projection des attributs nécessaires et pagination des résultats), la consommation électrique a été réduite de près de 30% sur la consultation des résultats de recherche.
+
 En l'état, la consommation électrique est désormais optimisée par rapport à la volumétrie des trajets disponibles, et à un niveau où la part due au CPU, à la mémoire et au réseau reste négligeable par rapport à celle de l'écran (qui représente toujours environ 90% de la consommation totale).
+
 L'enjeu dans les améliorations à venir de l'application sera de veiller à conserver cette sobriété.
+
