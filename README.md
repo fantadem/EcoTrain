@@ -273,4 +273,79 @@ le réseau côté serveur.
 
 Ce résultat confirme que l’optimisation la plus pertinente pour les prochaines étapes ne concerne pas seulement l’amélioration du code frontend, mais surtout la réduction du volume et de la fréquence des données transmises, ce que permettra l’introduction de CouchDB et du filtrage côté serveur.
 
-# Effet de l'introduction d'une base de données
+## Impact de l'introduction d'une base de données
+
+Afin de réduire l'impact énergétique du réseau, nous stockons désormais les données de l'application (v2.0.0) dans une base de données (*CouchDB*). Cette évolution nous permet, lors de l'affichage des résultats de recherche, de filtrer les trajets côté serveur au lieu de charger l'intégralité des données dans le navigateur.
+
+### Scénario (a) : Consultation de la page d'accueil
+
+|                    | cpu (s)   | screen (s) | mem (B)   | disk (B) | network (B) |
+|--------------------|-----------|------------|-----------|----------|-------------|
+| Navigateur Web     | 0,148     | 17,3       | 1,26e+8   | 0,00     | 5,02e+5     |
+| Serveur Web        | 0,000283  | 0,00       | 5,56e+6   | 0,00     | 3,80e+5     |
+| Base de données    | 0,0953    | 0,00       | 1,17e+8   | 0,00     | 26,0        |
+
+### Scénario (b) : Consultation des résultats de recherche
+
+|                    | cpu (s)   | screen (s) | mem (B)   | disk (B) | network (B) |
+|--------------------|-----------|------------|-----------|----------|-------------|
+| Navigateur Web     | 0,879     | 21,4       | 1,67e+8   | 0,00     | 1,30e+6     |
+| Serveur Web        | 0,000294  | 0,00       | 5,96e+6   | 0,00     | 3,80e+5     |
+| Base de données    | 0,184     | 0,00       | 1,17e+8   | 0,00     | 6,48e+5     |
+
+### Scénario (c) : Consultation des détails d'un trajet
+
+|                    | cpu (s)   | screen (s) | mem (B)   | disk (B) | network (B) |
+|--------------------|-----------|------------|-----------|----------|-------------|
+| Navigateur Web     | 0,125     | 17,6       | 1,27e+8   | 0,00     | 5,06e+5     |
+| Serveur Web        | 0,000261  | 0,00       | 5,96e+6   | 0,00     | 3,80e+5     |
+| Base de données    | 0,0923    | 0,00       | 1,17e+8   | 0,00     | 1,60e+3     |
+
+__Tab.8__ : Effet sur l'utilisation des ressources de l'introduction d'une base de données dans l'application.
+
+---
+
+| (a)             | cpu (Wh)                          | mem (Wh)                         | disk (Wh) | network (Wh)                     | screen (Wh)              | total (Wh)                   |
+|-----------------|-----------------------------------|----------------------------------|-----------|----------------------------------|--------------------------|------------------------------|
+| Navigateur      | <del>0,0018</del><br/>0,0018      | <del>0,00015</del><br/>0,000048  | 0,0       | <del>0,026</del><br/>0,0026      | <del>0,069</del><br/>0,067 | <del>0,073</del><br/>0,072 |
+| Serveur Web     | <del>0,000022</del><br/>0,0000049 | <del>0,0000075</del><br/>0,0000031 | 0,0     | <del>0,019</del><br/>0,0019      | 0,0                      | <del>0,020</del><br/>0,0020  |
+| Base de données | <del>0</del><br/>0,0017           | <del>0</del><br/>0,000061        | 0,0       | <del>0</del><br/>1,4e-7          | 0,0                      | <del>0</del><br/>0,0017      |
+
+| (b)             | cpu (Wh)                          | mem (Wh)                         | disk (Wh) | network (Wh)                     | screen (Wh)              | total (Wh)                   |
+|-----------------|-----------------------------------|----------------------------------|-----------|----------------------------------|--------------------------|------------------------------|
+| Navigateur      | <del>0,012</del><br/>0,011        | <del>0,000079</del><br/>0,000077 | 0,0       | <del>0,0058</del><br/>0,0067     | <del>0,082</del><br/>0,083 | <del>0,099</del><br/>0,10  |
+| Serveur Web     | <del>0,000026</del><br/>0,0000051 | <del>0,0000089</del><br/>0,0000038 | 0,0     | <del>0,045</del><br/>0,0019      | 0,0                      | <del>0,0046</del><br/>0,0020 |
+| Base de données | <del>0</del><br/>0,0032           | <del>0</del><br/>0,000075        | 0,0       | <del>0</del><br/>0,0033          | 0,0                      | <del>0</del><br/>0,0066      |
+
+| (c)             | cpu (Wh)                          | mem (Wh)                         | disk (Wh) | network (Wh)                     | screen (Wh)              | total (Wh)                   |
+|-----------------|-----------------------------------|----------------------------------|-----------|----------------------------------|--------------------------|------------------------------|
+| Navigateur      | 0,0016                            | 0,000048                         | 0,0       | 0,0026                           | 0,069                    | 0,073                        |
+| Serveur Web     | 0,0000046                         | 0,0000031                        | 0,0       | 0,0019                           | 0,0                      | 0,0020                       |
+| Base de données | 0,0016                            | 0,000061                         | 0,0       | 0,0000087                        | 0,0                      | 0,0017                       |
+
+__Tab.9__ : Effet sur la consommation énergétique de l'introduction d'une base de données dans l'application, lors de la consultation de la page d'accueil (tableau 9.a), des résultats de recherche (tableau 9.b) et des détails d'un trajet (tableau 9.c).
+
+Pour la consultation des détails d'un trajet, cette forte diminution de l'utilisation des ressources réseau se traduit par une consommation énergétique estimée (cf. Tab.9c) quasiment minimale, comparable à celle de la page d'accueil.
+
+## Limitation du nombre d'éléments affichés
+Sur notre plateforme de réservation de billets de trains, il n'est pas nécessaire de faire apparaître tous les trajets disponibles sur une même page de résultats.
+Ayant mis à disposition la possibilité de spécifier les gares de départ et d'arrivée, ainsi qu'une date et une heure de départ, nous ferons le choix de limiter les résultats à 10 trajets dans un premier temps, tout en laissant la possibilité de charger des trajets suivants grâce à un bouton en bas de page. À noter qu'il sera également possible de modifier les résultats en changeant l'heure de départ préalablement renseignée dans la zone de recherche.
+Cette stratégie permettra à l'utilisateur de visualiser des résultats correspondant d'abord à sa recherche, tout en ayant la possibilité de modifier cette vue.
+
+<img src="./docs/pagination.png" alt="Chargement progressif (à la demande) des résultats de recherche" width="700"/>
+
+Fig.7 : Chargement progressif (à la demande) des résultats de recherche (capture d'écran).
+
+|                 | cpu (Wh)                           | mem (Wh)                           | disk (Wh) | network (Wh)                       | screen (Wh)               | total (Wh)                    |
+|-----------------|------------------------------------|------------------------------------|-----------|------------------------------------|--------------------------|-----------------------------|
+| Navigateur      | <del>0,011</del><br/>0,0029        | <del>0,000077</del><br/>0,000053   | 0,0       | <del>0,0067</del><br/>0,0027       | <del>0,083</del><br/>0,069 | <del>0,10</del><br/>0,075   |
+| Serveur Web     | <del>0,0000051</del><br/>0,0000099 | <del>0,0000038</del><br/>0,0000030 | 0,0       | <del>0,0019</del><br/>0,0020       | 0,0                      | <del>0,0020</del><br/>0,0020  |
+| Base de données | <del>0,0032</del><br/>0,0011       | <del>0,000075</del><br/>0,000056   | 0,0       | <del>0,0033</del><br/>0,000029     | 0,0                      | <del>0,0066</del><br/>0,0012  |
+
+Tab.10 : Effet sur la consommation énergétique du chargement progressif (à la demande) lors de la consultation des résultats de recherche.
+
+L'implémentation de la stratégie en question (v2.0.1, cf. Fig.7) a produit l'effet attendu (cf. Tab.10) : la consommation électrique a significativement diminué avec la réduction du nombre de résultats affichés, passant de 48.39 mg CO₂ à 34.51 mg CO₂, soit une réduction de 28.7%.
+Cette amélioration provient principalement de la réduction du temps d'affichage et du nombre d'éléments DOM à traiter par le navigateur. La base de données consomme désormais 5 fois moins d'énergie grâce au filtrage et à la limitation des résultats côté serveur.
+Pour résumer, le passage à l'échelle de 15 à 1500 trajets disponibles avait entraîné une augmentation de la consommation électrique. Par des techniques simples de base de données (sélection du document pertinent, projection des attributs nécessaires et pagination des résultats), la consommation électrique a été réduite de près de 30% sur la consultation des résultats de recherche.
+En l'état, la consommation électrique est désormais optimisée par rapport à la volumétrie des trajets disponibles, et à un niveau où la part due au CPU, à la mémoire et au réseau reste négligeable par rapport à celle de l'écran (qui représente toujours environ 90% de la consommation totale).
+L'enjeu dans les améliorations à venir de l'application sera de veiller à conserver cette sobriété.
