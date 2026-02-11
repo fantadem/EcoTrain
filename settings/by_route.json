@@ -1,0 +1,11 @@
+{
+  "index": {
+    "fields": [
+      "departure",
+      "arrival",
+      "date"
+    ]
+  },
+  "name": "by_route",
+  "type": "json"
+}

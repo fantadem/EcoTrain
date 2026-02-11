@@ -6,8 +6,6 @@ services:
       - ./settings/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
       - 80:80
-    networks:
-      - greenframe
       
   backend:
     image: couchdb:3
@@ -16,8 +14,6 @@ services:
     environment:
       - COUCHDB_USER=admin
       - COUCHDB_PASSWORD=admin
-    networks:
-      - greenframe
     healthcheck:
       test: curl -f http://localhost:5984/_up || exit 1
       start_period: 10s
@@ -26,6 +22,8 @@ services:
   accessible_backend:
     image: curlimages/curl
     entrypoint: ["/bin/sh", "-c"]
+    volumes:
+      - ./settings/by_route.json:/by_route.json:ro
     command:
       - |
         alias put="curl -X PUT -u 'admin:admin'"
@@ -45,9 +43,13 @@ services:
         echo "Configuration des permissions..."
         put backend:5984/ecotrain/_security --data '{"members":{"roles":[]},"admins":{"roles":["_admin"]}}'
         
+        echo "Creation de l'index..."
+        curl -X POST http://backend:5984/ecotrain/_index \
+          -H "Content-Type: application/json" \
+          -d @/by_route.json \
+          -u 'admin:admin'
+        
         echo "Configuration terminee"
-    networks:
-      - greenframe
     depends_on:
       backend:
         condition: service_healthy
@@ -65,12 +67,6 @@ services:
           -d @/sample_data.json \
           -u 'admin:admin'
         echo "Donnees envoyees"
-    networks:
-      - greenframe
     depends_on:
       accessible_backend:
         condition: service_completed_successfully
-
-networks:
-  greenframe:
-    name: greenframe

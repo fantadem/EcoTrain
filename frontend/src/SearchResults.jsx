@@ -12,6 +12,10 @@ function useQuery() {
 
 function SearchResults({}) {
   const [results, setResults] = useState([])
+  const [bookmark, setBookmark] = useState(null) // Nouveau : stocker le bookmark
+  const [hasMore, setHasMore] = useState(false) //  Nouveau : savoir s'il y a plus de résultats
+  const [loading, setLoading] = useState(false) //  Nouveau : état de chargement
+  
   const query = useQuery();
   const navigate = useNavigate();
   const passengers = Math.max(1, parseInt(query.passengers || '1', 10));
@@ -52,42 +56,81 @@ function SearchResults({}) {
     navigate(`/trips?${params}`);
   }
 
-  useEffect(() => {
-    fetch('http://localhost:5984/ecotrain/_all_docs?include_docs=true')
-      .then(x => x.json())
-      .then(data => {
-        // Extraire les documents depuis data.rows
-        const trips = data.rows.map(row => row.doc);
-        setResults(trips);
-      })
-      .catch(error => {
-        console.error('Erreur lors du chargement des données:', error);
-      });
-  }, [])
-
-  const filtered = useMemo(() => {
-    if (!results || results.length === 0) return [];
-    const dep = (query.departure || '').trim().toLowerCase();
-    const arr = (query.arrival || '').trim().toLowerCase();
-
-    let earliest = null;
+  //  Fonction pour charger les trajets avec pagination
+  const loadTrips = (append = false, nextBookmark = null) => {
+    setLoading(true);
+    
+    const dep = (query.departure || '').trim();
+    const arr = (query.arrival || '').trim();
+    
+    // Construire la requête Mango
+    const mangoQuery = {
+      selector: {
+        station_departure: dep,
+        station_arrival: arr,
+      },
+      limit: 10, //  Limiter à 10 résultats
+    };
+    
+    // Si on a un bookmark (page suivante), l'ajouter
+    if (nextBookmark) {
+      mangoQuery.bookmark = nextBookmark;
+    }
+    
+    // Si on a une date/heure, ajouter le filtre
     if (query.date && query.time) {
       const hour = parseInt(query.time);
       const dt = dayjs(query.date).hour(isNaN(hour) ? 0 : hour).minute(0).second(0);
-      earliest = dt.isValid() ? dt : null;
+      if (dt.isValid()) {
+        mangoQuery.selector.datetime_departure = {
+          "$gte": dt.toISOString()
+        };
+      }
     }
 
-    return results.filter(t => {
-      const matchesStations = (
-        (!dep || (t.station_departure || '').toLowerCase() === dep) &&
-        (!arr || (t.station_arrival || '').toLowerCase() === arr)
-      );
-      if (!matchesStations) return false;
-      if (!earliest) return true;
-      const tDep = dayjs(t.datetime_departure);
-      return tDep.isSame(earliest) || tDep.isAfter(earliest);
-    });
-  }, [results, query]);
+    fetch('http://localhost:5984/ecotrain/_find', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mangoQuery),
+    })
+      .then(x => x.json())
+      .then(data => {
+        // Ajouter ou remplacer les résultats
+        if (append) {
+          setResults(prev => [...prev, ...data.docs]);
+        } else {
+          setResults(data.docs);
+        }
+        
+        // Stocker le bookmark pour la page suivante
+        setBookmark(data.bookmark);
+        
+        // Vérifier s'il y a encore des résultats
+        // Si on a reçu moins de 10 résultats, c'est la dernière page
+        setHasMore(data.docs.length === 10);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Erreur lors du chargement des données:', error);
+        setLoading(false);
+      });
+  };
+
+  //  Charger les premiers résultats quand les paramètres changent
+  useEffect(() => {
+    if (query.departure && query.arrival) {
+      loadTrips(false, null);
+    }
+  }, [query.departure, query.arrival, query.date, query.time]);
+
+  //  Fonction pour charger plus de résultats
+  const loadMore = () => {
+    if (bookmark && !loading) {
+      loadTrips(true, bookmark);
+    }
+  };
 
   return (
     <section className="container">
@@ -126,8 +169,21 @@ function SearchResults({}) {
         </form>
       </section>
       <h2>Voyages trouvés :</h2>
-      {filtered.length === 0 && (<p>Aucun trajet ne correspond à votre recherche.</p>)}
-      {filtered.map((x) => <SearchResult {...x} key={x._id} passengers={passengers} />)}
+      {results.length === 0 && !loading && (<p>Aucun trajet ne correspond à votre recherche.</p>)}
+      {results.map((x) => <SearchResult {...x} key={x._id} passengers={passengers} />)}
+      
+      {/* 📌 Bouton "Charger plus" */}
+      {hasMore && (
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <button 
+            onClick={loadMore} 
+            disabled={loading}
+            className="outline"
+          >
+            {loading ? 'Chargement...' : 'Charger plus de trajets'}
+          </button>
+        </div>
+      )}
     </section>
   )
 }
