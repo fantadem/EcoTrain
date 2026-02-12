@@ -19,7 +19,7 @@ form {
   background-color:var(--pico-color-orange-100);
   padding:2em;
   border-radius:0.5em;
-  border-color:black;
+  border-color:rgb(78, 184, 68);
   border: solid 2px var(--pico-primary-background)
 }
 
@@ -27,7 +27,7 @@ form {
   background-color:var(--pico-color-orange-100);
   padding:2em;
   border-radius:0.5em;
-  border-color:black;
+  border-color:rgb(78, 184, 68);
   border: solid 2px var(--pico-primary-background)
 }
 
@@ -65,6 +65,6 @@ div > button {
 .class-option.selected{
   background: var(--pico-primary-background);
   color: var(--pico-primary-inverse);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   font-weight:600;
 }
