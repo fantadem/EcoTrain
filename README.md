@@ -380,3 +380,97 @@ L'implémentation de cette fonctionnalité (v2.1.0, cf. Fig.8) a un impact éner
 Cette légère réduction s'explique par l'approche sobre adoptée : le filtrage est effectué entièrement côté client en JavaScript, sans requête serveur supplémentaire ni chargement de librairie externe. Les trajets sont simplement masqués ou affichés selon les critères sélectionnés. Lorsque des trajets sont filtrés et masqués, le navigateur a moins d'éléments DOM à maintenir et à afficher, ce qui peut expliquer la légère réduction observée dans la consommation du CPU navigateur.
 
 **Décision** : Cette contribution est **validée**. Elle apporte une amélioration significative de l'expérience utilisateur tout en réduisant légèrement l'impact énergétique de l'application.
+
+## Rétrospective du projet
+
+Ce projet s'inscrit dans une démarche de sensibilisation plus large aux enjeux environnementaux du numérique, débutée par la **Fresque du Numérique** en début de semestre.
+
+### Prise de conscience initiale
+
+La Fresque du Numérique m'a permis de découvrir l'ensemble du cycle de vie de nos équipements numériques : de l'extraction des ressources (métaux rares, terres rares) nécessaires à la fabrication de nos smartphones et ordinateurs, jusqu'à leur fin de vie en tant que déchets électroniques souvent mal recyclés. Cette sensibilisation a été renforcée par le visionnage du documentaire [**"Derrière YouTube et Netflix : un DÉSASTRE ÉCOLOGIQUE"**](https://www.youtube.com/watch?v=nBjEHLO9ra8), qui m'a ouvert les yeux sur l'impact colossal des data centers et du streaming vidéo sur la consommation énergétique mondiale.
+
+Ces découvertes ont radicalement changé ma perception du numérique : ce qui semblait immatériel et donc sans impact est en réalité l'une des industries les plus consommatrices de ressources et d'énergie au monde.
+
+### La question de la viabilité économique
+
+Au-delà de l'impact environnemental, ce projet m'a confronté à une problématique complexe : **la viabilité financière des applications web**. Pour qu'une application survive et continue d'exister, elle doit générer des revenus. C'est ce qui explique pourquoi de nombreux sites ajoutent :
+- Des **fonctionnalités payantes** pour attirer et fidéliser les utilisateurs
+- De la **publicité** pour financer leur développement et leur maintenance
+- Des **trackers** pour monétiser les données utilisateurs
+
+Cette réalité économique crée une tension avec la sobriété numérique : chaque publicité, chaque tracker, chaque fonctionnalité superflue augmente l'empreinte environnementale. Le cas de SNCF Connect illustre bien ce dilemme : un site riche en fonctionnalités mais avec un EcoIndex faible (F - 23/100).
+
+Dans notre projet EcoTrain, nous avons fait le choix d'un **modèle économique sobre** basé uniquement sur une commission sur les ventes de billets (environ 2%, soit 0,90€ par billet vendu à 45€). Ce modèle permet de financer l'application sans recourir à la publicité, mais il nécessite un volume de transactions important pour être viable.
+
+Ce choix pose la question essentielle : **peut-on concilier viabilité économique et sobriété environnementale ?** Notre projet suggère que oui, à condition d'accepter de :
+- Limiter les fonctionnalités au strict nécessaire
+- Renoncer à la publicité si le modèle économique le permet
+- Optimiser l'existant plutôt que d'ajouter sans cesse de nouvelles features
+
+### Ce que j'ai découvert avec EcoTrain
+
+#### La domination de l'écran dans les mesures
+
+La première grande surprise lors de nos mesures avec GreenFrame a été de constater que **l'écran représente systématiquement 85-90% de la consommation totale**, quelle que soit la page consultée. Ce résultat confirme ce que j'avais appris lors de la Fresque : l'impact principal du numérique vient des équipements utilisateurs (fabrication et utilisation), pas uniquement des serveurs.
+
+Cette observation a une conséquence importante pour notre conception : réduire le temps passé sur l'application devient plus crucial que d'optimiser le code serveur. Un parcours utilisateur fluide qui permet de trouver rapidement son trajet a donc un impact direct sur la sobriété.
+
+Paradoxalement, cette découverte rejoint les intérêts économiques : **un utilisateur qui trouve rapidement ce qu'il cherche est plus satisfait et plus susceptible de revenir**. La sobriété et la viabilité ne sont donc pas toujours opposées.
+
+#### L'efficacité spectaculaire de la pagination
+
+Le passage à l'échelle (de 15 à 1500 trajets) avait initialement fait exploser la consommation. L'implémentation de la pagination avec CouchDB a permis de **réduire de 28,7%** l'empreinte de la recherche. Cette optimisation m'a montré qu'il n'est pas nécessaire de charger des milliers de données pour satisfaire l'utilisateur : 10 résultats pertinents suffisent, avec la possibilité d'en voir plus si besoin.
+
+Cette approche rejoint un principe fondamental de sobriété : **faire moins, mais mieux**.
+
+#### Le filtrage sobre est possible
+
+L'ajout du filtre par prix et classe (v2.1.0) a même légèrement **réduit la consommation** (-2,2%) au lieu de l'augmenter. Cette contribution validée démontre qu'améliorer l'expérience utilisateur et réduire l'impact environnemental ne sont pas contradictoires, à condition de faire des choix techniques sobres : filtrage côté client sans librairie externe, manipulation minimale du DOM.
+
+Cette fonctionnalité illustre qu'**ajouter de la valeur utilisateur n'implique pas forcément d'augmenter l'impact**. Le processus de validation par mesure avant/après est crucial pour distinguer les fonctionnalités sobres des fonctionnalités coûteuses.
+
+### Leçons apprises
+
+#### 1. Mesurer pour décider
+Sans GreenFrame, je n'aurais jamais su que la pagination réduirait autant la consommation. La mesure systématique avant/après chaque modification est essentielle pour valider les contributions et éviter les régressions.
+
+#### 2. La sobriété dès la conception
+Les choix faits en amont (pas d'images, pas de publicité, framework CSS minimaliste) ont eu plus d'impact que les optimisations techniques ultérieures. La sobriété se conçoit, elle ne s'ajoute pas après coup.
+
+Cette approche a également un **coût social** : renoncer aux images et à la publicité peut réduire l'attractivité du site et donc sa viabilité économique. C'est un arbitrage conscient que nous avons fait, possible uniquement parce que notre modèle économique le permettait.
+
+#### 3. Le réseau est un levier majeur
+Contrairement à ce que je pensais initialement, le réseau représente un poste de consommation significatif, notamment côté serveur. Réduire la taille et le nombre de requêtes (via l'indexation CouchDB et la pagination) a été l'optimisation la plus efficace du projet.
+
+C'est aussi là où la publicité a le plus d'impact : chaque bannière publicitaire nécessite des requêtes réseau supplémentaires (téléchargement d'images, scripts de tracking), multipliant ainsi la consommation.
+
+#### 4. L'écran : incompressible mais maîtrisable
+On ne peut pas réduire la consommation de l'écran directement, mais on peut limiter le temps d'utilisation en rendant l'application plus efficace : résultats rapides, parcours fluide, informations pertinentes.
+
+#### 5. Viabilité vs Sobriété : un équilibre à trouver
+La vraie question n'est pas "comment rendre mon application 100% sobre" mais **"comment maximiser la valeur utilisateur avec un impact minimal"**. Certaines fonctionnalités justifient leur coût environnemental par leur utilité (filtre par prix, pagination). D'autres (publicités, animations superflues, trackers multiples) augmentent l'impact sans apporter de valeur réelle à l'utilisateur.
+
+Le rôle du développeur est de faire ces arbitrages de manière consciente et mesurée.
+
+### Conclusion
+
+Ce projet m'a fait passer de la sensibilisation théorique (Fresque du Numérique, documentaires) à l'action concrète : concevoir, mesurer, optimiser. Le résultat — **une réduction de 30% de l'empreinte carbone** tout en améliorant les fonctionnalités — prouve que la sobriété numérique n'est pas qu'un slogan marketing, mais une réalité technique atteignable.
+
+Le plus important est sans doute cette prise de conscience : chaque ligne de code, chaque requête HTTP, chaque image a un coût environnemental **et** un coût social. En tant que développeur, j'ai le pouvoir et la responsabilité de faire des choix qui concilient :
+- **L'utilité sociale** : l'application doit répondre à un besoin réel
+- **La viabilité économique** : l'application doit pouvoir se financer
+- **La sobriété environnementale** : l'application doit minimiser son impact
+
+Ces trois dimensions ne sont pas incompatibles, mais elles nécessitent des arbitrages conscients et une remise en question constante de ce qui est vraiment nécessaire.
+
+### Synthèse des versions
+
+| Version | Fonctionnalité | Impact mesuré |
+|---------|----------------|---------------|
+| v1.0.0 | Application de base | Baseline : ~79 mg CO₂ |
+| v1.0.1 | Chargement dynamique | Impact similaire |
+| v2.0.0 | Introduction CouchDB | Optimisation architecture |
+| v2.0.1 | Pagination (10 résultats) | **-28,7%** (48,39 → 34,51 mg CO₂) |
+| v2.1.0 | Filtre prix et classe | **-2,2%** (35,16 → 34,39 mg CO₂) |
+
+**Gain total** : Environ **-30%** par rapport à la version initiale avec passage à l'échelle.
