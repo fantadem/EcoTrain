@@ -354,3 +354,29 @@ En l'état, la consommation électrique est désormais optimisée par rapport à
 
 L'enjeu dans les améliorations à venir de l'application sera de veiller à conserver cette sobriété.
 
+
+## Validation des contributions
+
+Maintenant que nous disposons d'un produit minimum viable sobre et passant à l'échelle, il s'agit de continuer à améliorer sa qualité d'usage sans augmenter significativement son impact écologique.
+
+### Ajout d'un filtre par prix et classe
+
+Afin d'améliorer l'expérience utilisateur, nous avons ajouté la possibilité de filtrer les résultats de recherche par classe (2ème ou 1ère) et par prix maximum. Cette fonctionnalité permet aux utilisateurs de trouver plus rapidement les trajets correspondant à leur budget.
+
+<img src="./docs/filtre_prix.png" alt="Interface de filtrage par prix et classe" width="800"/>
+
+__Fig.8__ : Interface de filtrage par prix et classe (capture d'écran).
+
+|                 | cpu (Wh)                           | mem (Wh)                           | disk (Wh) | network (Wh)                       | screen (Wh)               | total (Wh)                    |
+|-----------------|------------------------------------|------------------------------------|-----------|------------------------------------|--------------------------|-----------------------------|
+| Navigateur      | <del>0,0035</del><br/>0,0021       | <del>0,000052</del><br/>0,000052   | 0,0       | <del>0,0024</del><br/>0,0025       | <del>0,069</del><br/>0,069 | <del>0,076</del><br/>0,074 |
+| Serveur Web     | <del>0,000015</del><br/>0,000018   | <del>0,000030</del><br/>0,000029   | 0,0       | <del>0,0020</del><br/>0,0019       | 0,0                      | <del>0,0020</del><br/>0,0020  |
+| Base de données | <del>0,0020</del><br/>0,0019       | <del>0,000057</del><br/>0,000056   | 0,0       | <del>0,000023</del><br/>0,000030   | 0,0                      | <del>0,0020</del><br/>0,0020  |
+
+__Tab.11__ : Effet sur la consommation énergétique de l'ajout du filtre par prix et classe lors de la consultation des résultats de recherche.
+
+L'implémentation de cette fonctionnalité (v2.1.0, cf. Fig.8) a un impact énergétique **légèrement positif** (cf. Tab.11) : la consommation électrique a diminué, passant de **35,16 mg CO₂** à **34,39 mg CO₂**, soit une réduction de **2,2%**.
+
+Cette légère réduction s'explique par l'approche sobre adoptée : le filtrage est effectué entièrement côté client en JavaScript, sans requête serveur supplémentaire ni chargement de librairie externe. Les trajets sont simplement masqués ou affichés selon les critères sélectionnés. Lorsque des trajets sont filtrés et masqués, le navigateur a moins d'éléments DOM à maintenir et à afficher, ce qui peut expliquer la légère réduction observée dans la consommation du CPU navigateur.
+
+**Décision** : Cette contribution est **validée**. Elle apporte une amélioration significative de l'expérience utilisateur tout en réduisant légèrement l'impact énergétique de l'application.
